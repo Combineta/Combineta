@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Combineta · Viajes compartidos para caballos</title>
+<meta name="description" content="Buscá un camión que ya va para tu lado y pagá solo el lugar de tu caballo. Transportistas publican sus viajes con lugar libre.">
+<meta name="theme-color" content="#1c5a91">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Combineta">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800;900&family=Overpass+Mono:wght@600&display=swap">
+<style>
+:root {
+  --bg: #f3f7fb;
+  --surface: #ffffff;
+  --ink: #10243a;
+  --muted: #4f6275;
+  --line: #d3dee9;
+  --celeste: #74acdf;
+  --celeste-soft: #e3f0fa;
+  --azul: #1c5a91;          /* botones y encabezado */
+  --azul-ink: #ffffff;
+  --dorado: #f2b01e;        /* lugares libres, sello */
+  --dorado-ink: #3a2700;
+  --ok: #1d7a4a;
+  --bad: #b3261e;
+  --display: "Overpass", system-ui, sans-serif;
+  --mono: "Overpass Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1722; --surface: #142232; --ink: #e6eef6; --muted: #9db0c3; --line: #263a4f;
+    --celeste: #74acdf; --celeste-soft: #18324a; --azul: #2f78b8; --azul-ink: #ffffff;
+    --dorado: #f5bd3e; --dorado-ink: #2e1f00; --ok: #57c48a; --bad: #ff8a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1722; --surface: #142232; --ink: #e6eef6; --muted: #9db0c3; --line: #263a4f;
+  --celeste: #74acdf; --celeste-soft: #18324a; --azul: #2f78b8; --azul-ink: #ffffff;
+  --dorado: #f5bd3e; --dorado-ink: #2e1f00; --ok: #57c48a; --bad: #ff8a80;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--display); font-size: 17px; line-height: 1.5;
+  padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--dorado); outline-offset: 2px; border-radius: 6px; }
+.wrap { max-width: 720px; margin: 0 auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+
+/* Barra de arriba */
+.bar { background: var(--azul); color: var(--azul-ink); padding-top: env(safe-area-inset-top, 0px); }
+.bar .wrap { display: flex; align-items: center; gap: 10px; min-height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand-name { font-weight: 900; font-size: 24px; letter-spacing: 0.01em; }
+.brand-tag { margin-left: auto; font-size: 13px; opacity: 0.85; text-align: right; line-height: 1.2; }
+.stripe { height: 5px; background: linear-gradient(90deg, var(--celeste) 0 33%, #fff 33% 66%, var(--celeste) 66%); }
+
+/* Vistas */
+.view { padding-block: 22px 32px; display: flex; flex-direction: column; gap: 18px; }
+.view h1 { font-size: clamp(28px, 7vw, 38px); font-weight: 900; }
+.lead { color: var(--muted); font-size: 17px; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.section-title h2 { font-size: 21px; font-weight: 800; }
+.count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+
+/* Buscador */
+.search { background: var(--surface); border: 2px solid var(--ink); border-radius: 14px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr auto; }
+.search-field { display: flex; flex-direction: column; padding: 8px 14px; border-right: 1px solid var(--line); min-width: 0; }
+.search-field label { font-size: 12px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.search-field input { border: 0; background: transparent; font-size: 19px; font-weight: 600; padding: 2px 0; min-height: 34px; width: 100%; }
+.search-field input:focus { outline: none; }
+.search-field:focus-within { background: var(--celeste-soft); }
+.search .btn { border-radius: 0; min-height: 100%; }
+.search-note { font-size: 15px; color: var(--muted); }
+@media (max-width: 560px) {
+  .search { grid-template-columns: 1fr; }
+  .search-field { border-right: 0; border-bottom: 1px solid var(--line); }
+  .search .btn { min-height: 56px; }
+}
+
+/* Botones */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-weight: 800; font-size: 17px; padding: 13px 20px; min-height: 52px;
+  border-radius: 12px; border: 2px solid transparent; cursor: pointer; text-decoration: none; text-align: center;
+}
+.btn-primary { background: var(--azul); color: var(--azul-ink); }
+.btn-gold { background: var(--dorado); color: var(--dorado-ink); }
+.btn-ghost { background: transparent; border-color: var(--line); }
+.btn-wa { background: #1f9d55; color: #fff; }
+.btn-sm { min-height: 42px; padding: 8px 14px; font-size: 15px; border-radius: 10px; }
+.btn[disabled] { opacity: 0.55; cursor: progress; }
+@media (prefers-reduced-motion: no-preference) { .btn { transition: filter .15s, background-color .15s; } }
+.btn:hover { filter: brightness(1.06); }
+
+/* Tarjetas de viaje */
+.list { display: flex; flex-direction: column; gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; grid-template-columns: auto 1fr; gap: 14px; min-width: 0; }
+.card.match { border: 2px solid var(--dorado); }
+.day { width: 58px; border-radius: 10px; background: var(--celeste-soft); text-align: center; padding: 6px 0; align-self: start; }
+.day b { display: block; font-size: 26px; font-weight: 900; line-height: 1; }
+.day span { display: block; font-family: var(--mono); font-size: 12px; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+.card-body { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.route { font-weight: 800; font-size: 19px; line-height: 1.25; overflow-wrap: anywhere; }
+.via, .meta { font-size: 15px; color: var(--muted); overflow-wrap: anywhere; }
+.near { font-size: 14px; font-weight: 800; color: var(--azul); }
+:root:not([data-theme="light"]) .near { color: var(--celeste); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .near { color: var(--azul); } }
+:root[data-theme="light"] .near { color: var(--azul); }
+.who { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; margin-top: 2px; }
+.seal { display: inline-flex; align-items: center; gap: 4px; background: var(--dorado); color: var(--dorado-ink); font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
+.newbie { font-size: 12px; color: var(--muted); border: 1px solid var(--line); padding: 1px 8px; border-radius: 20px; }
+.card-foot { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 12px; }
+.slots { display: flex; align-items: center; gap: 8px; }
+.slot-row { display: flex; gap: 3px; }
+.slot { width: 11px; height: 17px; border-radius: 3px; background: var(--line); }
+.slot.free { background: var(--dorado); }
+.slot-label { font-family: var(--mono); font-size: 13px; }
+.price { font-weight: 800; }
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.empty strong { font-size: 18px; }
+.empty p { color: var(--muted); }
+.status { font-size: 15px; color: var(--muted); }
+.status.err { color: var(--bad); font-weight: 700; }
+
+/* Formularios */
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px; gap: 4px; }
+.seg button { border: 0; background: transparent; border-radius: 10px; min-height: 52px; font-weight: 800; font-size: 16px; cursor: pointer; color: var(--muted); line-height: 1.2; padding: 6px; }
+.seg button[aria-pressed="true"] { background: var(--azul); color: var(--azul-ink); }
+.form { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+.form-intro { color: var(--muted); }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+.field label, .field legend { font-weight: 800; font-size: 16px; padding: 0; }
+.hint { font-size: 14px; color: var(--muted); }
+.field input, .field select, .field textarea {
+  background: var(--bg); border: 2px solid var(--line); border-radius: 10px;
+  padding: 11px 13px; min-height: 52px; width: 100%; font-size: 17px;
+}
+.field textarea { min-height: 84px; resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--azul); outline: none; }
+fieldset.field { border: 0; margin: 0; padding: 0; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice { position: relative; }
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+.choice span { display: inline-flex; align-items: center; min-height: 46px; padding: 8px 14px; border: 2px solid var(--line); border-radius: 10px; font-weight: 600; cursor: pointer; background: var(--bg); }
+.choice input:checked + span { background: var(--azul); border-color: var(--azul); color: var(--azul-ink); }
+.choice input:focus-visible + span { outline: 3px solid var(--dorado); outline-offset: 2px; }
+.form-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.form-error { color: var(--bad); font-weight: 700; font-size: 15px; }
+@media (max-width: 560px) { .fields { grid-template-columns: 1fr; } }
+
+/* Mis viajes */
+.mine { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.mine-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.pill { font-size: 13px; font-weight: 800; padding: 2px 10px; border-radius: 20px; border: 1px solid var(--line); white-space: nowrap; }
+.pill.pendiente { background: var(--celeste-soft); }
+.pill.confirmada { background: var(--ok); color: #fff; border-color: var(--ok); }
+.pill.rechazada, .pill.cancelada { color: var(--muted); }
+.res { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.res-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.note { background: var(--celeste-soft); border-radius: 12px; padding: 14px 16px; font-size: 15px; }
+
+/* Ventana de sumarse */
+dialog { border: 0; padding: 0; border-radius: 18px 18px 0 0; width: 100%; max-width: 720px; margin: auto auto 0; background: var(--surface); color: var(--ink); max-height: 92vh; }
+dialog::backdrop { background: rgba(8, 20, 33, 0.55); }
+@media (min-width: 760px) { dialog { border-radius: 18px; margin: auto; } }
+.dlg { padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
+.dlg-sum { background: var(--azul); color: var(--azul-ink); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; }
+.dlg-sum strong { font-size: 19px; }
+.dlg-sum span { font-size: 15px; opacity: 0.92; }
+.done { display: flex; flex-direction: column; gap: 12px; }
+.done h3 { font-size: 22px; }
+
+/* Navegación de abajo */
+.tabbar { position: fixed; inset: auto 0 0 0; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 5; }
+.tabbar .wrap { display: grid; grid-template-columns: repeat(3, 1fr); }
+.tabbar a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 10px; text-decoration: none; font-size: 13px; font-weight: 800; color: var(--muted); min-height: 64px; justify-content: center; }
+.tabbar a[aria-current="page"] { color: var(--azul); }
+:root:not([data-theme="light"]) .tabbar a[aria-current="page"] { color: var(--celeste); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .tabbar a[aria-current="page"] { color: var(--azul); } }
+:root[data-theme="light"] .tabbar a[aria-current="page"] { color: var(--azul); }
+.tabbar svg { width: 26px; height: 26px; }
+
+.toast { position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 12px; font-weight: 700; font-size: 15px; z-index: 10; max-width: calc(100% - 32px); }
+.foot { color: var(--muted); font-size: 14px; padding-block: 8px 24px; display: flex; flex-direction: column; gap: 6px; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="#buscar" aria-label="Combineta, inicio">
+      <img src="icon.svg" width="36" height="36" alt="" style="border-radius:9px">
+      <span class="brand-name">Combineta</span>
+    </a>
+    <span class="brand-tag">Viajes compartidos<br>para caballos</span>
+  </div>
+</header>
+<div class="stripe" aria-hidden="true"></div>
+
+<main class="wrap">
+
+  <!-- BUSCAR -->
+  <section class="view" id="v-buscar" aria-labelledby="t-buscar">
+    <h1 id="t-buscar">¿A dónde llevás tu caballo?</h1>
+    <p class="lead">Buscá un camión que ya va para tu lado y pagá solo tu lugar.</p>
+    <form class="search" id="f-buscar" role="search" novalidate>
+      <div class="search-field"><label for="q-desde">Desde</label><input id="q-desde" list="pueblos" placeholder="Ej: Concordia" autocomplete="off"></div>
+      <div class="search-field"><label for="q-hasta">Hasta</label><input id="q-hasta" list="pueblos" placeholder="Ej: Santa Rosa" autocomplete="off"></div>
+      <button class="btn btn-primary" type="submit">Buscar</button>
+    </form>
+    <p class="search-note" id="search-note">El camión puede desviarse hasta 50 km para cargar o bajar.</p>
+
+    <div class="section-title"><h2 id="h-viajes">Próximos viajes con lugar</h2><span class="count" id="c-viajes"></span></div>
+    <p class="status" id="s-viajes" role="status">Cargando viajes…</p>
+    <div class="list" id="l-viajes"></div>
+
+    <div class="section-title"><h2 id="h-pedidos">Gente que busca lugar</h2><span class="count" id="c-pedidos"></span></div>
+    <p class="hint">Si sos transportista y vas para ese lado, escribiles directo.</p>
+    <div class="list" id="l-pedidos"></div>
+  </section>
+
+  <!-- PUBLICAR -->
+  <section class="view" id="v-publicar" aria-labelledby="t-publicar" hidden>
+    <h1 id="t-publicar">Publicar</h1>
+    <div class="seg" role="group" aria-label="Qué querés publicar">
+      <button type="button" data-seg="viaje" aria-pressed="true">Tengo lugar en mi camión</button>
+      <button type="button" data-seg="pedido" aria-pressed="false">Necesito llevar un caballo</button>
+    </div>
+
+    <form class="form" id="f-viaje" novalidate>
+      <p class="form-intro">Contá a dónde vas y cuántos lugares te quedan. Aparece al instante y los dueños te escriben por WhatsApp.</p>
+      <div class="fields">
+        <div class="field"><label for="v-desde">Salgo de</label><input id="v-desde" list="pueblos" required placeholder="Ej: Concordia"></div>
+        <div class="field"><label for="v-hasta">Voy a</label><input id="v-hasta" list="pueblos" required placeholder="Ej: Santa Rosa"></div>
+        <div class="field full"><label for="v-paso">Pueblos por donde paso</label><input id="v-paso" placeholder="Ej: Paraná, Rosario, Rufino, General Pico"><span class="hint">Separados por coma, en orden. Así te encuentran los que están en el camino.</span></div>
+        <div class="field"><label for="v-fecha">Día de salida</label><input id="v-fecha" type="date" required></div>
+        <div class="field"><label for="v-hora">Hora (aprox.)</label><input id="v-hora" type="time"></div>
+        <div class="field"><label for="v-total">Lugares en total</label><input id="v-total" type="number" inputmode="numeric" min="1" max="40" required placeholder="Ej: 6"></div>
+        <div class="field"><label for="v-libres">Lugares libres</label><input id="v-libres" type="number" inputmode="numeric" min="1" max="40" required placeholder="Ej: 3"></div>
+        <div class="field"><label for="v-precio">Precio por caballo</label><input id="v-precio" placeholder="Ej: $250.000 o a convenir"></div>
+        <div class="field"><label for="v-veh">Vehículo</label>
+          <select id="v-veh"><option>Trailer</option><option>Camioneta con trailer</option><option>Camión para caballos</option><option>Camión jaula</option></select></div>
+        <div class="field"><label for="v-nombre">Tu nombre o empresa</label><input id="v-nombre" required autocomplete="name" data-remember="nombre"></div>
+        <div class="field"><label for="v-wa">Tu WhatsApp</label><input id="v-wa" type="tel" inputmode="tel" required placeholder="Ej: 3456 123456" data-remember="wa"><span class="hint">Con código de área, sin 0 ni 15.</span></div>
+        <div class="field full"><label for="v-nota">Algo más</label><textarea id="v-nota" placeholder="Ej: tengo habilitación SENASA, llevo agua y fardo"></textarea></div>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Publicar mi viaje</button><span class="form-error" role="alert" hidden></span></div>
+    </form>
+
+    <form class="form" id="f-pedido" novalidate hidden>
+      <p class="form-intro">Si todavía nadie publicó tu ruta, dejá tu pedido. Los transportistas que van para ese lado lo ven y te escriben.</p>
+      <div class="fields">
+        <div class="field"><label for="p-desde">Desde</label><input id="p-desde" list="pueblos" required placeholder="Ej: Concordia"></div>
+        <div class="field"><label for="p-hasta">Hasta</label><input id="p-hasta" list="pueblos" required placeholder="Ej: Santa Rosa"></div>
+        <div class="field"><label for="p-f1">Desde el día</label><input id="p-f1" type="date"></div>
+        <div class="field"><label for="p-f2">Hasta el día</label><input id="p-f2" type="date"><span class="hint">Si la fecha es flexible, poné un rango.</span></div>
+        <div class="field"><label for="p-cab">¿Cuántos caballos?</label><input id="p-cab" type="number" inputmode="numeric" min="1" max="40" required value="1"></div>
+        <fieldset class="field"><legend>Tipo de viaje</legend>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="p-tipo" value="Compartido" checked><span>Compartido</span></label>
+            <label class="choice"><input type="radio" name="p-tipo" value="Exclusivo"><span>Exclusivo</span></label>
+          </div></fieldset>
+        <div class="field"><label for="p-nombre">Tu nombre</label><input id="p-nombre" required autocomplete="name" data-remember="nombre"></div>
+        <div class="field"><label for="p-wa">Tu WhatsApp</label><input id="p-wa" type="tel" inputmode="tel" required placeholder="Ej: 2954 123456" data-remember="wa"><span class="hint">Lo van a ver los transportistas para escribirte.</span></div>
+        <div class="field full"><label for="p-nota">Algo más</label><textarea id="p-nota" placeholder="Ej: petiza mansa, carga bien, papeles al día"></textarea></div>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Publicar mi pedido</button><span class="form-error" role="alert" hidden></span></div>
+    </form>
+
+    <div id="publicado" hidden class="form done" aria-live="polite"></div>
+  </section>
+
+  <!-- MIS VIAJES -->
+  <section class="view" id="v-mis" aria-labelledby="t-mis" hidden>
+    <h1 id="t-mis">Mis viajes</h1>
+    <p class="note">Lo que publicás queda guardado en este celular. Si cambiás de teléfono, escribinos y lo pasamos.</p>
+    <p class="status" id="s-mis" role="status"></p>
+    <div class="section-title"><h2>Viajes que publiqué</h2></div>
+    <div class="list" id="l-mis-viajes"></div>
+    <div class="section-title"><h2>Lugares que pedí</h2></div>
+    <div class="list" id="l-mis-res"></div>
+    <div class="section-title"><h2>Mis pedidos</h2></div>
+    <div class="list" id="l-mis-ped"></div>
+  </section>
+
+  <footer class="foot">
+    <span>Combineta conecta dueños y transportistas. Cada viaje se arregla directo entre ellos.</span>
+    <span>¿Dudas o querés el sello de verificado? <a id="contacto-fede" href="#" target="_blank" rel="noopener">Escribile a Fede</a>.</span>
+  </footer>
+</main>
+
+<nav class="tabbar" aria-label="Secciones">
+  <div class="wrap">
+    <a href="#buscar" data-view="buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>Buscar</a>
+    <a href="#publicar" data-view="publicar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Publicar</a>
+    <a href="#mis" data-view="mis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 16h2l1.5-5h10l2.5 5h4"/><path d="M5.5 11 8 6h7l3 5"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>Mis viajes</a>
+  </div>
+</nav>
+
+<datalist id="pueblos"></datalist>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <form class="dlg" id="f-sumarme" method="dialog" novalidate>
+    <h2 id="dlg-title" style="font-size:22px">Sumarme a este viaje</h2>
+    <div class="dlg-sum" id="dlg-sum"></div>
+    <div class="fields">
+      <div class="field"><label for="r-cab">¿Cuántos caballos?</label><input id="r-cab" type="number" inputmode="numeric" min="1" required value="1"><span class="hint" id="r-cab-hint"></span></div>
+      <div class="field"><label for="r-carga">¿Dónde los cargan?</label><input id="r-carga" list="pueblos" required></div>
+      <div class="field"><label for="r-baja">¿Dónde bajan?</label><input id="r-baja" list="pueblos"></div>
+      <fieldset class="field"><legend>¿Papeles al día?</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="r-pap" value="Sí"><span>Sí</span></label>
+          <label class="choice"><input type="radio" name="r-pap" value="No sé" checked><span>No sé</span></label>
+        </div></fieldset>
+      <div class="field"><label for="r-nombre">Tu nombre</label><input id="r-nombre" required autocomplete="name" data-remember="nombre"></div>
+      <div class="field"><label for="r-wa">Tu WhatsApp</label><input id="r-wa" type="tel" inputmode="tel" required data-remember="wa"><span class="hint">Solo lo ve el transportista.</span></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-gold" type="submit" id="r-ok">Pedir mi lugar</button>
+      <button class="btn btn-ghost" type="button" id="r-cancel">Cerrar</button>
+      <span class="form-error" role="alert" hidden></span>
+    </div>
+  </form>
+  <div class="dlg done" id="dlg-done" hidden></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+  // ---------- Configuración ----------
+  const SUPABASE_URL = "https://wfwrvjzbnyaruyayttjv.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_AUwIm_IsQELTf9l5RGMt5g_wdHceHyE"; // clave pública, va en la app
+  const WHATSAPP_FEDE = "5492392636595";
+  const CERCA_KM = 50;
+
+  // ---------- Utilidades ----------
+  const $ = id => document.getElementById(id);
+  function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  const store = {
+    get(k) { try { return localStorage.getItem("combineta." + k); } catch (_) { return null; } },
+    set(k, v) { try { localStorage.setItem("combineta." + k, v); } catch (_) {} },
+    del(k) { try { localStorage.removeItem("combineta." + k); } catch (_) {} }
+  };
+  const hoyISO = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+  const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const fdate = iso => { const d = new Date(iso + "T12:00:00Z"); return { dia: d.getUTCDate(), mes: MESES[d.getUTCMonth()], sem: DIAS[d.getUTCDay()] }; };
+  const fcorta = iso => { const f = fdate(iso); return f.sem + " " + f.dia + " " + f.mes; };
+  const plural = (n, uno, varios) => n === 1 ? "1 " + uno : n + " " + varios;
+
+  function normWA(s) {
+    let t = String(s || "").trim();
+    const intl = /^(\+|00)/.test(t);
+    let d = t.replace(/^00/, "").replace(/\D/g, "");
+    if (intl) return d;
+    if (d.startsWith("54")) { if (!d.startsWith("549") && d.length === 12) d = "549" + d.slice(2); return d; }
+    d = d.replace(/^0/, "");
+    if (d.length === 12 && /^\d{2,4}15/.test(d)) { /* número con 15: lo sacamos */
+      for (const n of [2, 3, 4]) if (d.slice(n, n + 2) === "15") { const x = d.slice(0, n) + d.slice(n + 2); if (x.length === 10) { d = x; break; } }
+    }
+    if (d.length === 10) return "549" + d;
+    return d;
+  }
+  const waLink = (num, msg) => "https://wa.me/" + num + (msg ? "?text=" + encodeURIComponent(msg) : "");
+
+  let toastT;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3500); }
+
+  // ---------- Conexión con la base (Supabase, sin librerías) ----------
+  const SES_KEY = "sesion";
+  let sesion = null;
+  try { sesion = JSON.parse(store.get(SES_KEY) || "null"); } catch (_) { sesion = null; }
+  const miId = () => sesion && sesion.user_id;
+
+  async function authFetch(path, body) {
+    const r = await fetch(SUPABASE_URL + "/auth/v1/" + path, {
+      method: "POST", headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" }, body: JSON.stringify(body)
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { const e = new Error(j.msg || j.error_description || j.message || "Error de acceso"); e.code = j.error_code || j.code; throw e; }
+    return j;
+  }
+  function guardarSesion(j) {
+    sesion = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000, user_id: j.user && j.user.id };
+    store.set(SES_KEY, JSON.stringify(sesion));
+  }
+  // Entrada sin cuenta: la primera vez que alguien publica, se le crea una identidad anónima guardada en este celular.
+  async function asegurarSesion() {
+    if (sesion && sesion.expires_at - Date.now() > 60000) return;
+    if (sesion && sesion.refresh_token) {
+      try { guardarSesion(await authFetch("token?grant_type=refresh_token", { refresh_token: sesion.refresh_token })); return; }
+      catch (e) { if (sesion.user_id) throw new Error("No pudimos renovar tu acceso. Probá de nuevo en un rato."); }
+    }
+    try { guardarSesion(await authFetch("signup", { data: {} })); }
+    catch (e) {
+      if (e.code === "anonymous_provider_disabled" || /anonymous/i.test(e.message)) throw new Error("La app todavía no está habilitada para publicar (falta activar el acceso sin cuenta en Supabase).");
+      throw e;
+    }
+  }
+  async function api(method, path, body, opts) {
+    opts = opts || {};
+    if (opts.auth) await asegurarSesion();
+    else if (sesion && sesion.refresh_token) { try { await asegurarSesion(); } catch (_) {} }
+    const h = { apikey: SUPABASE_KEY };
+    if (sesion && sesion.access_token && sesion.expires_at > Date.now()) h.Authorization = "Bearer " + sesion.access_token;
+    if (body !== undefined) h["Content-Type"] = "application/json";
+    if (method === "POST" && !path.startsWith("rpc/")) h.Prefer = "return=representation";
+    if (method === "PATCH") h.Prefer = "return=representation";
+    let r;
+    try { r = await fetch(SUPABASE_URL + "/rest/v1/" + path, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) }); }
+    catch (_) { throw new Error("Sin conexión. Revisá internet y probá de nuevo."); }
+    const txt = await r.text();
+    const j = txt ? JSON.parse(txt) : null;
+    if (!r.ok) { const e = new Error(traducir(j && j.message) || "Algo falló (" + r.status + ")"); e.raw = j; throw e; }
+    return j;
+  }
+  function traducir(m) {
+    if (!m) return m;
+    if (/row-level security/i.test(m)) return "No se pudo guardar. Puede que ya no queden lugares en ese viaje.";
+    if (/whatsapp_check|whatsapp/i.test(m) && /check/i.test(m)) return "Revisá el número de WhatsApp.";
+    if (/libres_validos/.test(m)) return "Los lugares libres no pueden ser más que el total.";
+    return m;
+  }
+
+  // ---------- Pueblos y rutas ----------
+  const PUEBLOS = {
+    "Buenos Aires": [-34.60, -58.38], "Pilar": [-34.46, -58.91], "General Rodríguez": [-34.61, -58.95], "Luján": [-34.57, -59.11],
+    "Open Door": [-34.49, -59.07], "Cañuelas": [-35.05, -58.76], "Lobos": [-35.18, -59.10], "Zárate": [-34.10, -59.03], "Campana": [-34.16, -58.96],
+    "San Antonio de Areco": [-34.25, -59.47], "Mercedes": [-34.65, -59.43], "Chivilcoy": [-34.90, -60.02], "Bragado": [-35.12, -60.49],
+    "9 de Julio": [-35.44, -60.88], "Carlos Casares": [-35.62, -61.36], "Pehuajó": [-35.81, -61.90], "Trenque Lauquen": [-35.97, -62.73],
+    "Junín": [-34.59, -60.95], "Lincoln": [-34.87, -61.53], "General Villegas": [-35.03, -63.01], "Pergamino": [-33.89, -60.57],
+    "San Nicolás": [-33.33, -60.22], "Chascomús": [-35.58, -58.01], "Las Flores": [-36.01, -59.10], "Dolores": [-36.31, -57.68],
+    "Azul": [-36.78, -59.86], "Olavarría": [-36.89, -60.32], "Tandil": [-37.32, -59.13], "Bolívar": [-36.23, -61.11],
+    "Coronel Suárez": [-37.45, -61.93], "Tres Arroyos": [-38.37, -60.28], "Mar del Plata": [-38.00, -57.56], "Bahía Blanca": [-38.72, -62.27],
+    "Santa Rosa": [-36.62, -64.29], "Toay": [-36.67, -64.38], "General Pico": [-35.66, -63.76], "Realicó": [-35.04, -64.25], "General Acha": [-37.38, -64.60],
+    "Eduardo Castex": [-35.92, -64.29], "Intendente Alvear": [-35.24, -63.59], "Quemú Quemú": [-36.06, -63.56], "Catriló": [-36.41, -63.42],
+    "Macachín": [-37.14, -63.67], "Victorica": [-36.22, -65.44], "Winifreda": [-36.23, -64.24],
+    "Rosario": [-32.95, -60.64], "Venado Tuerto": [-33.75, -61.97], "Rufino": [-34.26, -62.71], "Santa Fe": [-31.63, -60.70], "Firmat": [-33.46, -61.49],
+    "Río Cuarto": [-33.13, -64.35], "Laboulaye": [-34.13, -63.39], "Villa María": [-32.41, -63.24], "Córdoba": [-31.42, -64.18], "Marcos Juárez": [-32.70, -62.10],
+    "Villa Mercedes": [-33.68, -65.46], "San Luis": [-33.30, -66.34], "Mendoza": [-32.89, -68.83], "San Rafael": [-34.62, -68.33],
+    "Paraná": [-31.73, -60.53], "Concordia": [-31.39, -58.02], "Colón": [-32.22, -58.14], "Concepción del Uruguay": [-32.48, -58.24],
+    "Gualeguaychú": [-33.01, -58.52], "Gualeguay": [-33.14, -59.31], "Victoria": [-32.62, -60.15], "Villaguay": [-31.86, -59.03],
+    "Chajarí": [-30.75, -57.98], "Federal": [-30.95, -58.78], "La Paz": [-30.74, -59.65], "Nogoyá": [-32.39, -59.79],
+    "Corrientes": [-27.47, -58.83], "Resistencia": [-27.45, -58.99], "Santiago del Estero": [-27.79, -64.26],
+    "Tucumán": [-26.82, -65.22], "Salta": [-24.79, -65.41], "Neuquén": [-38.95, -68.06]
+  };
+  const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim();
+  const PN = {}; Object.keys(PUEBLOS).forEach(k => { PN[norm(k)] = { nombre: k, c: PUEBLOS[k] }; });
+  const pueblo = s => PN[norm(s)] || null;
+  const nombrePueblo = s => { const p = pueblo(s); return p ? p.nombre : String(s || "").trim(); };
+  Object.keys(PUEBLOS).sort((a, b) => a.localeCompare(b, "es")).forEach(k => { const o = document.createElement("option"); o.value = k; $("pueblos").append(o); });
+
+  function plano(c, lat0) { return [c[1] * 111.32 * Math.cos(lat0 * Math.PI / 180), c[0] * 110.57]; }
+  function cercania(paradas, punto) {
+    const pts = paradas.map(pueblo).filter(Boolean).map(p => p.c);
+    if (!pts.length) return null;
+    const lat0 = punto[0], q = plano(punto, lat0);
+    if (pts.length === 1) { const a = plano(pts[0], lat0); return { km: Math.hypot(q[0] - a[0], q[1] - a[1]), avance: 0 }; }
+    let mejor = null, recorrido = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = plano(pts[i], lat0), b = plano(pts[i + 1], lat0);
+      const dx = b[0] - a[0], dy = b[1] - a[1], largo = Math.hypot(dx, dy) || 1e-9;
+      let t = ((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / (largo * largo); t = Math.max(0, Math.min(1, t));
+      const km = Math.hypot(q[0] - (a[0] + t * dx), q[1] - (a[1] + t * dy));
+      if (!mejor || km < mejor.km) mejor = { km, avance: recorrido + t * largo };
+      recorrido += largo;
+    }
+    return mejor;
+  }
+  // ¿Este viaje (lista de paradas en orden) sirve para ir de "desde" a "hasta"?
+  function sirve(paradas, desde, hasta) {
+    const pd = pueblo(desde), ph = pueblo(hasta);
+    if (pd && ph) {
+      const a = cercania(paradas, pd.c), b = cercania(paradas, ph.c);
+      if (a && b && a.km <= CERCA_KM && b.km <= CERCA_KM && a.avance < b.avance) return { kmDesde: a.km, kmHasta: b.km, desde: pd.nombre, hasta: ph.nombre };
+      return null;
+    }
+    const ps = paradas.map(norm), i = ps.indexOf(norm(desde)), j = ps.indexOf(norm(hasta));
+    return i >= 0 && j > i ? { kmDesde: 0, kmHasta: 0, desde: nombrePueblo(desde), hasta: nombrePueblo(hasta) } : null;
+  }
+  const notaKm = (km, lugar) => km < 8 ? "Pasa por " + lugar : "Pasa a " + Math.max(5, Math.round(km / 5) * 5) + " km de " + lugar;
+  const fechaEnRango = (f, p) => (!p.fecha_desde || f >= p.fecha_desde) && (!p.fecha_hasta || f <= p.fecha_hasta);
+
+  // ---------- Datos ----------
+  let VIAJES = [], PEDIDOS = [], VERIFICADOS = new Set(), cargado = false;
+  async function cargar() {
+    const hoy = hoyISO();
+    try {
+      const [v, p, ver] = await Promise.all([
+        api("GET", "viajes?select=*&activo=is.true&fecha=gte." + hoy + "&order=fecha.asc,hora.asc"),
+        api("GET", "pedidos?select=*&activo=is.true&or=(fecha_hasta.is.null,fecha_hasta.gte." + hoy + ")&order=creado.desc"),
+        api("GET", "perfiles?select=id&verificado=is.true")
+      ]);
+      VIAJES = v || []; PEDIDOS = p || []; VERIFICADOS = new Set((ver || []).map(x => x.id));
+      cargado = true;
+      $("s-viajes").textContent = ""; $("s-viajes").classList.remove("err");
+    } catch (e) {
+      $("s-viajes").textContent = "No pudimos traer los viajes. " + e.message;
+      $("s-viajes").classList.add("err");
+    }
+    pintarBuscar();
+  }
+
+  // ---------- Vista: Buscar ----------
+  let busqueda = null; // {desde, hasta}
+  function tarjetaViaje(v, match) {
+    const card = el("article", "card" + (match ? " match" : ""));
+    const f = fdate(v.fecha);
+    const day = el("div", "day"); day.append(el("b", null, String(f.dia)), el("span", null, f.mes)); day.setAttribute("aria-hidden", "true");
+    const body = el("div", "card-body");
+    body.append(el("div", "route", v.paradas[0] + " → " + v.paradas[v.paradas.length - 1]));
+    const medio = v.paradas.slice(1, -1);
+    if (medio.length) body.append(el("div", "via", "Pasa por " + medio.join(", ")));
+    body.append(el("div", "meta", fcorta(v.fecha) + (v.hora ? " · sale " + v.hora.slice(0, 5) : "") + " · " + v.vehiculo));
+    if (match) body.append(el("div", "near", notaKm(match.kmDesde, match.desde) + " · " + notaKm(match.kmHasta, match.hasta)));
+    const who = el("div", "who"); who.append(el("span", null, v.nombre));
+    if (VERIFICADOS.has(v.owner)) { const s = el("span", "seal", "✓ Verificado"); s.title = "Fede revisó al transportista y su vehículo"; who.append(s); }
+    else who.append(el("span", "newbie", "Nuevo"));
+    body.append(who);
+    if (v.nota) body.append(el("div", "via", v.nota));
+    const foot = el("div", "card-foot");
+    const slots = el("div", "slots");
+    const sr = el("div", "slot-row"); sr.setAttribute("aria-hidden", "true");
+    for (let i = 0; i < Math.min(v.total, 20); i++) sr.append(el("i", "slot" + (i >= v.total - v.libres ? " free" : "")));
+    slots.append(sr, el("span", "slot-label", v.libres ? plural(v.libres, "libre", "libres") : "Completo"));
+    const der = el("div", "slots");
+    if (v.precio) der.append(el("span", "price", v.precio));
+    if (v.libres > 0 && v.owner !== miId()) {
+      const b = el("button", "btn btn-gold btn-sm", "Sumarme"); b.type = "button";
+      b.setAttribute("aria-label", "Sumarme al viaje " + v.paradas[0] + " a " + v.paradas[v.paradas.length - 1] + " del " + fcorta(v.fecha));
+      b.addEventListener("click", () => abrirSumarme(v, match));
+      der.append(b);
+    } else if (v.owner === miId()) der.append(el("span", "newbie", "Tu viaje"));
+    foot.append(slots, der);
+    card.append(day, body, foot);
+    return card;
+  }
+  function tarjetaPedido(p, destacado) {
+    const card = el("article", "card" + (destacado ? " match" : ""));
+    const day = el("div", "day"); day.setAttribute("aria-hidden", "true");
+    if (p.fecha_desde) { const f = fdate(p.fecha_desde); day.append(el("b", null, String(f.dia)), el("span", null, f.mes)); }
+    else day.append(el("b", null, "?"), el("span", null, "fecha"));
+    const body = el("div", "card-body");
+    body.append(el("div", "route", p.desde + " → " + p.hasta));
+    let cuando = "Fecha flexible";
+    if (p.fecha_desde && p.fecha_hasta && p.fecha_desde !== p.fecha_hasta) cuando = "Entre el " + fcorta(p.fecha_desde) + " y el " + fcorta(p.fecha_hasta);
+    else if (p.fecha_desde) cuando = "El " + fcorta(p.fecha_desde);
+    else if (p.fecha_hasta) cuando = "Antes del " + fcorta(p.fecha_hasta);
+    body.append(el("div", "meta", cuando + " · " + plural(p.caballos, "caballo", "caballos") + " · " + p.tipo));
+    body.append(el("div", "who", p.nombre));
+    if (p.nota) body.append(el("div", "via", p.nota));
+    const foot = el("div", "card-foot");
+    foot.append(el("span", "hint", "Busca transporte"));
+    if (p.owner !== miId()) {
+      const a = el("a", "btn btn-wa btn-sm", "Escribirle por WhatsApp");
+      a.href = waLink(p.whatsapp, "Hola " + p.nombre + ", vi tu pedido en Combineta (" + p.desde + " → " + p.hasta + ", " + plural(p.caballos, "caballo", "caballos") + "). Voy para ese lado, ¿hablamos?");
+      a.target = "_blank"; a.rel = "noopener";
+      foot.append(a);
+    } else foot.append(el("span", "newbie", "Tu pedido"));
+    card.append(day, body, foot);
+    return card;
+  }
+
+  function pintarBuscar() {
+    const lv = $("l-viajes"), lp = $("l-pedidos");
+    lv.replaceChildren(); lp.replaceChildren();
+    if (!cargado) return;
+    let viajes = VIAJES, pedidos = PEDIDOS, matches = new Map();
+    if (busqueda) {
+      viajes = VIAJES.filter(v => { const m = sirve(v.paradas, busqueda.desde, busqueda.hasta); if (m) matches.set(v, m); return !!m; })
+        .sort((a, b) => (b.libres > 0) - (a.libres > 0) || a.fecha.localeCompare(b.fecha));
+      pedidos = PEDIDOS.filter(p => sirve([p.desde, p.hasta], busqueda.desde, busqueda.hasta) || (norm(p.desde) === norm(busqueda.desde) && norm(p.hasta) === norm(busqueda.hasta)));
+      $("h-viajes").textContent = "Viajes de " + nombrePueblo(busqueda.desde) + " a " + nombrePueblo(busqueda.hasta);
+      $("h-pedidos").textContent = "Otros que buscan lo mismo";
+    } else {
+      $("h-viajes").textContent = "Próximos viajes con lugar";
+      $("h-pedidos").textContent = "Gente que busca lugar";
+    }
+    $("c-viajes").textContent = viajes.length ? plural(viajes.length, "viaje", "viajes") : "";
+    $("c-pedidos").textContent = pedidos.length ? plural(pedidos.length, "pedido", "pedidos") : "";
+    viajes.forEach(v => lv.append(tarjetaViaje(v, matches.get(v))));
+    if (!viajes.length) {
+      const e = el("div", "empty");
+      if (busqueda) {
+        e.append(el("strong", null, "Todavía nadie publicó un viaje que pase por ahí."),
+          el("p", null, "Dejá tu pedido: los transportistas que van para ese lado lo ven y te escriben. Si otros dueños buscan lo mismo, comparten camión."));
+        const b = el("button", "btn btn-primary", "Dejar mi pedido"); b.type = "button";
+        b.addEventListener("click", () => { $("p-desde").value = nombrePueblo(busqueda.desde); $("p-hasta").value = nombrePueblo(busqueda.hasta); irA("publicar"); setSeg("pedido"); $("p-f1").focus(); });
+        e.append(b);
+      } else {
+        e.append(el("strong", null, "Todavía no hay viajes publicados."),
+          el("p", null, "¿Sos transportista? Publicá tu viaje con lugar libre. ¿Tenés que mover un caballo? Buscá tu ruta y dejá tu pedido."));
+      }
+      lv.append(e);
+    }
+    pedidos.forEach(p => lp.append(tarjetaPedido(p)));
+    if (!pedidos.length) lp.append(el("p", "status", busqueda ? "Nadie más pidió esa ruta por ahora." : "Por ahora nadie pidió lugar."));
+  }
+
+  $("f-buscar").addEventListener("submit", e => {
+    e.preventDefault();
+    const d = $("q-desde").value.trim(), h = $("q-hasta").value.trim();
+    if (!d || !h) { (d ? $("q-hasta") : $("q-desde")).focus(); return; }
+    busqueda = { desde: d, hasta: h };
+    const sinMapa = [d, h].filter(x => !pueblo(x));
+    $("search-note").textContent = sinMapa.length
+      ? "No tengo ubicado \"" + sinMapa[0] + "\" en el mapa: busqué solo por nombre. Probá con la ciudad más cercana."
+      : "El camión puede desviarse hasta 50 km para cargar o bajar.";
+    pintarBuscar();
+    $("h-viajes").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  });
+
+  // ---------- Sumarme ----------
+  const dlg = $("dlg"); let viajeSel = null;
+  function abrirSumarme(v, match) {
+    viajeSel = v;
+    const s = $("dlg-sum");
+    s.replaceChildren(el("strong", null, v.paradas[0] + " → " + v.paradas[v.paradas.length - 1]),
+      el("span", null, fcorta(v.fecha) + (v.hora ? " · sale " + v.hora.slice(0, 5) : "") + " · " + v.nombre),
+      el("span", null, (v.libres === 1 ? "Queda 1 lugar" : "Quedan " + v.libres + " lugares") + (v.precio ? " · " + v.precio + " por caballo" : "")));
+    $("r-cab").max = v.libres; $("r-cab").value = 1;
+    $("r-cab-hint").textContent = "Hasta " + plural(v.libres, "caballo", "caballos") + ".";
+    $("r-carga").value = match ? match.desde : (busqueda ? nombrePueblo(busqueda.desde) : "");
+    $("r-baja").value = match ? match.hasta : (busqueda ? nombrePueblo(busqueda.hasta) : "");
+    $("f-sumarme").hidden = false; $("dlg-done").hidden = true;
+    $("f-sumarme").querySelector(".form-error").hidden = true;
+    recordar($("f-sumarme"));
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+    setTimeout(() => $("r-cab").focus(), 50);
+  }
+  $("r-cancel").addEventListener("click", () => dlg.close());
+  $("f-sumarme").addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.currentTarget, err = f.querySelector(".form-error");
+    if (!validar(f)) return;
+    const n = Number($("r-cab").value);
+    if (!(n >= 1 && n <= viajeSel.libres)) return mostrarError(err, "En este viaje entran hasta " + plural(viajeSel.libres, "caballo", "caballos") + ".", $("r-cab"));
+    const wa = normWA($("r-wa").value);
+    if (!/^\d{8,15}$/.test(wa)) return mostrarError(err, "Revisá tu WhatsApp: con código de área, sin 0 ni 15.", $("r-wa"));
+    const fila = { viaje_id: viajeSel.id, nombre: $("r-nombre").value.trim(), whatsapp: wa, caballos: n,
+      carga_en: $("r-carga").value.trim(), baja_en: $("r-baja").value.trim() || null,
+      papeles: (f.querySelector('input[name="r-pap"]:checked') || {}).value || null };
+    guardarDatos($("r-nombre").value, $("r-wa").value);
+    const btn = $("r-ok"); btn.disabled = true; btn.textContent = "Guardando…";
+    try {
+      await api("POST", "reservas", fila, { auth: true });
+      const v = viajeSel;
+      const msg = "Hola " + v.nombre + ", te escribo desde Combineta. Quiero sumarme a tu viaje " + v.paradas[0] + " → " + v.paradas[v.paradas.length - 1] +
+        " del " + fcorta(v.fecha) + ": " + plural(n, "caballo", "caballos") + ", los cargo en " + fila.carga_en + (fila.baja_en ? " y bajan en " + fila.baja_en : "") +
+        ". Soy " + fila.nombre + ". Te dejé el pedido en la app para que lo confirmes.";
+      const d = $("dlg-done");
+      const a = el("a", "btn btn-wa", "Avisarle por WhatsApp"); a.href = waLink(v.whatsapp, msg); a.target = "_blank"; a.rel = "noopener";
+      const c = el("button", "btn btn-ghost", "Listo"); c.type = "button"; c.addEventListener("click", () => dlg.close());
+      d.replaceChildren(el("h3", null, "¡Pedido enviado!"),
+        el("p", null, "Avisale a " + v.nombre + " por WhatsApp para que lo confirme. Cuando lo confirme, tu lugar queda reservado y lo ves en Mis viajes."),
+        a, c);
+      f.hidden = true; d.hidden = false; a.focus();
+    } catch (ex) { mostrarError(err, ex.message); }
+    finally { btn.disabled = false; btn.textContent = "Pedir mi lugar"; }
+  });
+
+  // ---------- Publicar ----------
+  function setSeg(k) {
+    document.querySelectorAll("[data-seg]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.seg === k)));
+    $("f-viaje").hidden = k !== "viaje"; $("f-pedido").hidden = k !== "pedido"; $("publicado").hidden = true;
+  }
+  document.querySelectorAll("[data-seg]").forEach(b => b.addEventListener("click", () => setSeg(b.dataset.seg)));
+  $("v-fecha").min = hoyISO(); $("p-f1").min = hoyISO(); $("p-f2").min = hoyISO();
+
+  function mostrarError(err, msg, foco) { err.textContent = msg; err.hidden = false; if (foco) foco.focus(); return false; }
+  function validar(form) {
+    const err = form.querySelector(".form-error");
+    const falta = Array.from(form.querySelectorAll("[required]")).filter(x => !String(x.value).trim());
+    if (falta.length) {
+      const nombres = falta.map(x => { const l = form.querySelector('label[for="' + x.id + '"]'); return l ? l.textContent : x.id; });
+      return mostrarError(err, "Falta completar: " + nombres.join(", ") + ".", falta[0]);
+    }
+    err.hidden = true; return true;
+  }
+  function guardarDatos(nombre, wa) { if (nombre) store.set("nombre", nombre.trim()); if (wa) store.set("wa", wa.trim()); }
+  function recordar(scope) { scope.querySelectorAll("[data-remember]").forEach(i => { if (!i.value) i.value = store.get(i.dataset.remember) || ""; }); }
+  recordar(document);
+
+  $("f-viaje").addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.currentTarget, err = f.querySelector(".form-error");
+    if (!validar(f)) return;
+    const total = Number($("v-total").value), libres = Number($("v-libres").value);
+    if (!(total >= 1 && total <= 40)) return mostrarError(err, "Lugares en total: entre 1 y 40.", $("v-total"));
+    if (!(libres >= 1 && libres <= total)) return mostrarError(err, "Los lugares libres tienen que ser entre 1 y el total.", $("v-libres"));
+    if ($("v-fecha").value < hoyISO()) return mostrarError(err, "La fecha ya pasó.", $("v-fecha"));
+    const wa = normWA($("v-wa").value);
+    if (!/^\d{8,15}$/.test(wa)) return mostrarError(err, "Revisá tu WhatsApp: con código de área, sin 0 ni 15.", $("v-wa"));
+    const paso = $("v-paso").value.split(/[,;\n]/).map(s => nombrePueblo(s)).filter(Boolean).slice(0, 10);
+    const paradas = [nombrePueblo($("v-desde").value), ...paso, nombrePueblo($("v-hasta").value)];
+    const fila = { nombre: $("v-nombre").value.trim(), whatsapp: wa, vehiculo: $("v-veh").value, paradas, fecha: $("v-fecha").value,
+      hora: $("v-hora").value || null, total, libres, precio: $("v-precio").value.trim() || null, nota: $("v-nota").value.trim() || null };
+    guardarDatos($("v-nombre").value, $("v-wa").value);
+    const btn = f.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Publicando…";
+    try {
+      const [v] = await api("POST", "viajes", fila, { auth: true });
+      VIAJES.push(v); VIAJES.sort((a, b) => a.fecha.localeCompare(b.fecha));
+      // ¿Quién está buscando justo esta ruta?
+      const interesados = PEDIDOS.filter(p => p.owner !== miId() && sirve(v.paradas, p.desde, p.hasta) && fechaEnRango(v.fecha, p));
+      const box = $("publicado");
+      box.replaceChildren(el("h3", null, "¡Tu viaje ya está publicado!"),
+        el("p", null, "Los dueños lo ven al buscar su ruta y te escriben por WhatsApp. Cuando alguien pida lugar, lo confirmás en Mis viajes y los lugares libres se descuentan solos."));
+      if (interesados.length) {
+        box.append(el("strong", null, interesados.length === 1 ? "Hay 1 persona que busca lugar en tu ruta:" : "Hay " + interesados.length + " personas que buscan lugar en tu ruta:"));
+        const l = el("div", "list"); interesados.forEach(p => l.append(tarjetaPedido(p, true))); box.append(l);
+      }
+      const ver = el("a", "btn btn-ghost", "Ver mis viajes"); ver.href = "#mis"; box.append(ver);
+      f.reset(); recordar(f); f.hidden = true; box.hidden = false; box.scrollIntoView({ block: "start" });
+      pintarBuscar();
+    } catch (ex) { mostrarError(err, ex.message); }
+    finally { btn.disabled = false; btn.textContent = "Publicar mi viaje"; }
+  });
+
+  $("f-pedido").addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.currentTarget, err = f.querySelector(".form-error");
+    if (!validar(f)) return;
+    const n = Number($("p-cab").value);
+    if (!(n >= 1 && n <= 40)) return mostrarError(err, "Caballos: entre 1 y 40.", $("p-cab"));
+    const f1 = $("p-f1").value || null, f2 = $("p-f2").value || null;
+    if (f1 && f2 && f2 < f1) return mostrarError(err, "La segunda fecha tiene que ser después de la primera.", $("p-f2"));
+    const wa = normWA($("p-wa").value);
+    if (!/^\d{8,15}$/.test(wa)) return mostrarError(err, "Revisá tu WhatsApp: con código de área, sin 0 ni 15.", $("p-wa"));
+    const fila = { nombre: $("p-nombre").value.trim(), whatsapp: wa, desde: nombrePueblo($("p-desde").value), hasta: nombrePueblo($("p-hasta").value),
+      fecha_desde: f1, fecha_hasta: f2, caballos: n, tipo: (f.querySelector('input[name="p-tipo"]:checked') || {}).value || "Compartido",
+      nota: $("p-nota").value.trim() || null };
+    guardarDatos($("p-nombre").value, $("p-wa").value);
+    const btn = f.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "Publicando…";
+    try {
+      const [p] = await api("POST", "pedidos", fila, { auth: true });
+      PEDIDOS.unshift(p);
+      const sirven = VIAJES.filter(v => v.libres >= p.caballos && sirve(v.paradas, p.desde, p.hasta) && fechaEnRango(v.fecha, p));
+      const box = $("publicado");
+      box.replaceChildren(el("h3", null, "¡Tu pedido está publicado!"),
+        el("p", null, "Los transportistas que van de " + p.desde + " a " + p.hasta + " lo ven y te escriben por WhatsApp. Si encontrás transporte, borralo desde Mis viajes."));
+      if (sirven.length) {
+        box.append(el("strong", null, sirven.length === 1 ? "Ya hay 1 viaje que te sirve:" : "Ya hay " + sirven.length + " viajes que te sirven:"));
+        const l = el("div", "list"); sirven.forEach(v => l.append(tarjetaViaje(v, sirve(v.paradas, p.desde, p.hasta)))); box.append(l);
+      }
+      const ver = el("a", "btn btn-ghost", "Ver mis viajes"); ver.href = "#mis"; box.append(ver);
+      f.reset(); $("p-cab").value = 1; recordar(f); f.hidden = true; box.hidden = false; box.scrollIntoView({ block: "start" });
+      pintarBuscar();
+    } catch (ex) { mostrarError(err, ex.message); }
+    finally { btn.disabled = false; btn.textContent = "Publicar mi pedido"; }
+  });
+
+  // ---------- Mis viajes ----------
+  async function cargarMis() {
+    const s = $("s-mis"), lv = $("l-mis-viajes"), lr = $("l-mis-res"), lp = $("l-mis-ped");
+    lv.replaceChildren(); lr.replaceChildren(); lp.replaceChildren();
+    if (!miId()) {
+      s.textContent = "Todavía no publicaste nada desde este celular.";
+      [lv, lr, lp].forEach(l => l.append(el("p", "status", "Nada por ahora.")));
+      return;
+    }
+    s.textContent = "Cargando…"; s.classList.remove("err");
+    try {
+      const uid = miId();
+      const [mv, mr, mp] = await Promise.all([
+        api("GET", "viajes?select=*&owner=eq." + uid + "&order=fecha.desc"),
+        api("GET", "reservas?select=*,viajes(*)&owner=eq." + uid + "&order=creado.desc"),
+        api("GET", "pedidos?select=*&owner=eq." + uid + "&order=creado.desc")
+      ]);
+      const ids = (mv || []).map(v => v.id);
+      const rs = ids.length ? await api("GET", "reservas?select=*&viaje_id=in.(" + ids.join(",") + ")&order=creado.asc") : [];
+      s.textContent = "";
+      pintarMisViajes(mv || [], rs || []);
+      pintarMisReservas(mr || []);
+      pintarMisPedidos(mp || []);
+    } catch (e) { s.textContent = "No pudimos cargar tus viajes. " + e.message; s.classList.add("err"); }
+  }
+  const ESTADOS = { pendiente: "Esperando confirmación", confirmada: "Confirmado", rechazada: "No hay lugar", cancelada: "Cancelado" };
+
+  function pintarMisViajes(viajes, reservas) {
+    const l = $("l-mis-viajes");
+    if (!viajes.length) { l.append(el("p", "status", "No publicaste viajes.")); return; }
+    viajes.forEach(v => {
+      const box = el("div", "mine");
+      const head = el("div", "mine-head");
+      const t = el("div"); t.append(el("div", "route", v.paradas[0] + " → " + v.paradas[v.paradas.length - 1]), el("div", "meta", fcorta(v.fecha) + " · " + v.libres + " de " + v.total + " libres"));
+      head.append(t, el("span", "pill" + (v.activo ? " confirmada" : ""), v.activo ? (v.fecha < hoyISO() ? "Ya salió" : "Publicado") : "Pausado"));
+      box.append(head);
+      const mias = reservas.filter(r => r.viaje_id === v.id && r.estado !== "cancelada");
+      if (!mias.length) box.append(el("p", "hint", "Todavía nadie pidió lugar."));
+      mias.forEach(r => {
+        const rr = el("div", "res");
+        const h = el("div", "mine-head");
+        h.append(el("strong", null, r.nombre + " · " + plural(r.caballos, "caballo", "caballos")), el("span", "pill " + r.estado, ESTADOS[r.estado]));
+        rr.append(h, el("span", "meta", "Carga en " + r.carga_en + (r.baja_en ? " · baja en " + r.baja_en : "") + (r.papeles ? " · papeles: " + r.papeles : "")));
+        const acts = el("div", "res-actions");
+        const wa = el("a", "btn btn-wa btn-sm", "WhatsApp"); wa.target = "_blank"; wa.rel = "noopener";
+        wa.href = waLink(r.whatsapp, "Hola " + r.nombre + ", soy " + v.nombre + " de Combineta, por tu lugar en el viaje " + v.paradas[0] + " → " + v.paradas[v.paradas.length - 1] + " del " + fcorta(v.fecha) + ".");
+        acts.append(wa);
+        if (r.estado === "pendiente") {
+          const ok = el("button", "btn btn-primary btn-sm", "Confirmar lugar"); ok.type = "button";
+          ok.addEventListener("click", () => accion(ok, "confirmar_reserva", r.id, "Lugar confirmado. Se descontó de los libres."));
+          const no = el("button", "btn btn-ghost btn-sm", "No tengo lugar"); no.type = "button";
+          no.addEventListener("click", () => accion(no, "rechazar_reserva", r.id, "Le avisamos que no hay lugar."));
+          acts.append(ok, no);
+        }
+        rr.append(acts); box.append(rr);
+      });
+      const acts = el("div", "res-actions");
+      const pausa = el("button", "btn btn-ghost btn-sm", v.activo ? "Ocultar viaje" : "Volver a mostrar"); pausa.type = "button";
+      pausa.addEventListener("click", async () => {
+        pausa.disabled = true;
+        try { await api("PATCH", "viajes?id=eq." + v.id, { activo: !v.activo }, { auth: true }); toast(v.activo ? "Viaje oculto." : "Viaje publicado de nuevo."); await refrescarTodo(); }
+        catch (e) { toast(e.message); pausa.disabled = false; }
+      });
+      acts.append(pausa); box.append(acts);
+      l.append(box);
+    });
+  }
+  function pintarMisReservas(rs) {
+    const l = $("l-mis-res");
+    if (!rs.length) { l.append(el("p", "status", "No pediste lugar en ningún viaje.")); return; }
+    rs.forEach(r => {
+      const v = r.viajes || {};
+      const box = el("div", "mine");
+      const head = el("div", "mine-head");
+      const t = el("div");
+      t.append(el("div", "route", v.paradas ? v.paradas[0] + " → " + v.paradas[v.paradas.length - 1] : "Viaje"), el("div", "meta", (v.fecha ? fcorta(v.fecha) + " · " : "") + (v.nombre || "") + " · " + plural(r.caballos, "caballo", "caballos")));
+      head.append(t, el("span", "pill " + r.estado, ESTADOS[r.estado]));
+      box.append(head);
+      const acts = el("div", "res-actions");
+      if (v.whatsapp) { const wa = el("a", "btn btn-wa btn-sm", "WhatsApp al transportista"); wa.href = waLink(v.whatsapp, "Hola " + v.nombre + ", te escribo por mi lugar en tu viaje del " + fcorta(v.fecha) + " (Combineta)."); wa.target = "_blank"; wa.rel = "noopener"; acts.append(wa); }
+      if (r.estado === "pendiente" || r.estado === "confirmada") {
+        const c = el("button", "btn btn-ghost btn-sm", "Cancelar mi lugar"); c.type = "button";
+        c.addEventListener("click", () => { if (confirmarDos(c)) accion(c, "cancelar_reserva", r.id, "Cancelaste tu lugar."); });
+        acts.append(c);
+      }
+      box.append(acts); l.append(box);
+    });
+  }
+  function pintarMisPedidos(ps) {
+    const l = $("l-mis-ped");
+    if (!ps.length) { l.append(el("p", "status", "No tenés pedidos.")); return; }
+    ps.forEach(p => {
+      const box = el("div", "mine");
+      const head = el("div", "mine-head");
+      const t = el("div"); t.append(el("div", "route", p.desde + " → " + p.hasta), el("div", "meta", plural(p.caballos, "caballo", "caballos") + " · " + p.tipo));
+      head.append(t, el("span", "pill" + (p.activo ? " pendiente" : ""), p.activo ? "Buscando" : "Cerrado"));
+      box.append(head);
+      if (p.activo) {
+        const acts = el("div", "res-actions");
+        const c = el("button", "btn btn-ghost btn-sm", "Ya conseguí transporte"); c.type = "button";
+        c.addEventListener("click", async () => {
+          c.disabled = true;
+          try { await api("PATCH", "pedidos?id=eq." + p.id, { activo: false }, { auth: true }); toast("Listo, sacamos tu pedido."); await refrescarTodo(); }
+          catch (e) { toast(e.message); c.disabled = false; }
+        });
+        acts.append(c); box.append(acts);
+      }
+      l.append(box);
+    });
+  }
+  function confirmarDos(btn) {
+    if (btn.dataset.armed) return true;
+    btn.dataset.armed = "1"; const t = btn.textContent; btn.textContent = "Tocá de nuevo para confirmar";
+    setTimeout(() => { delete btn.dataset.armed; btn.textContent = t; }, 4000);
+    return false;
+  }
+  async function accion(btn, fn, id, ok) {
+    btn.disabled = true;
+    try { await api("POST", "rpc/" + fn, { reserva: id }, { auth: true }); toast(ok); await refrescarTodo(); }
+    catch (e) { toast(e.message); btn.disabled = false; }
+  }
+  async function refrescarTodo() { await cargar(); if (vista === "mis") await cargarMis(); }
+
+  // ---------- Navegación ----------
+  let vista = "buscar";
+  function irA(v) { if (location.hash !== "#" + v) location.hash = v; else mostrar(v); }
+  function mostrar(v) {
+    if (!["buscar", "publicar", "mis"].includes(v)) v = "buscar";
+    vista = v;
+    if (dlg.open) dlg.close();
+    ["buscar", "publicar", "mis"].forEach(k => { $("v-" + k).hidden = k !== v; });
+    document.querySelectorAll(".tabbar a").forEach(a => { if (a.dataset.view === v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    if (v === "mis") cargarMis();
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", () => mostrar(location.hash.slice(1)));
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refrescarTodo(); });
+
+  $("contacto-fede").href = waLink(WHATSAPP_FEDE, "Hola Fede, te escribo por Combineta.");
+  mostrar(location.hash.slice(1) || "buscar");
+  cargar();
+})();
+</script>
+</body>
+</html>
