@@ -735,8 +735,9 @@ dl.resumen { margin: 0; }
       <fieldset class="ubi" id="ubi-c">
         <legend>📍 Ubicación exacta del campo</legend>
         <p class="hint">Así el transportista llega directo. Solo la ve él.</p>
+        <div class="field loc"><label for="r-c-buscar">Buscá el campo, haras o club</label><input id="r-c-buscar" data-buscar placeholder="Ej: Ellerstina, La Dolfina, Haras El Paraíso" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="r-c-buscar-lista"><ul class="loc-list" id="r-c-buscar-lista" role="listbox" hidden></ul></div>
         <div class="ubi-btns">
-          <button type="button" class="btn btn-primary" data-gps>📍 Estoy en el campo ahora</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-gps>📍 Estoy en el campo ahora</button>
           <button type="button" class="btn btn-ghost btn-sm" data-ultima hidden>Usar la última que cargué</button>
         </div>
         <div class="field"><label for="r-c-link">o pegá el link de Google Maps</label><input id="r-c-link" data-link inputmode="url" placeholder="https://maps.app.goo.gl/…" autocomplete="off"></div>
@@ -753,8 +754,9 @@ dl.resumen { margin: 0; }
       <div class="field"><label class="sr" for="r-baja">Lugar de descarga</label><input id="r-baja" class="big" placeholder="Localidad, campo o club"></div>
       <fieldset class="ubi" id="ubi-b">
         <legend>📍 ¿Es un campo o un club? (opcional)</legend>
-        <div class="ubi-btns"><button type="button" class="btn btn-ghost btn-sm" data-gps>Estoy ahí ahora</button></div>
-        <div class="field"><label for="r-b-link">Link de Google Maps</label><input id="r-b-link" data-link inputmode="url" placeholder="https://maps.app.goo.gl/…" autocomplete="off"></div>
+        <div class="field loc"><label for="r-b-buscar">Buscá el campo, haras o club</label><input id="r-b-buscar" data-buscar placeholder="Ej: Ellerstina, Club de Polo Santa Rosa" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="r-b-buscar-lista"><ul class="loc-list" id="r-b-buscar-lista" role="listbox" hidden></ul></div>
+        <div class="ubi-btns"><button type="button" class="btn btn-ghost btn-sm" data-gps>📍 Estoy ahí ahora</button></div>
+        <div class="field"><label for="r-b-link">o pegá el link de Google Maps</label><input id="r-b-link" data-link inputmode="url" placeholder="https://maps.app.goo.gl/…" autocomplete="off"></div>
         <p class="ubi-ok" data-estado role="status"></p>
         <div class="field"><label for="r-b-indic">Cómo llegar</label><textarea id="r-b-indic" data-indic placeholder="Ej: Club de polo, entrar por la calle de atrás"></textarea></div>
         <div class="fields">
@@ -852,6 +854,8 @@ dl.resumen { margin: 0; }
   const SUPABASE_KEY = "sb_publishable_AUwIm_IsQELTf9l5RGMt5g_wdHceHyE"; // clave pública
   const WHATSAPP_FEDE = "5492392636595";
   const EMAIL_COMBINETA = "combineta.ar@gmail.com";
+  const PHOTON = "https://photon.komoot.io/api/";
+  const NOMINATIM = "https://nominatim.openstreetmap.org/search";
   const QRLIB = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js";
   const VAPID_PUBLIC = "BOL81LUnenSiewaVPm1uNC5F0qAeHMsFMu8IIKS0YqfWXy_W4UHXvWEBa7uT77S-Icng29GxS69vYgJwSZ-_9b4";
   const GEOREF = "https://apis.datos.gob.ar/georef/api";
@@ -1625,22 +1629,93 @@ dl.resumen { margin: 0; }
     const lat = Number(m[1]), lng = Number(m[2]);
     return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
   }
+  // Buscador de lugares (campos, haras, clubes) sobre OpenStreetMap: gratis y sin cuenta
+  const cacheLugares = new Map();
+  async function buscarLugares(q, b) {
+    const k = q.toLowerCase() + "|" + (b ? b.lat.toFixed(1) + "," + b.lng.toFixed(1) : "");
+    if (cacheLugares.has(k)) return cacheLugares.get(k);
+    let out = [];
+    const det = (...xs) => [...new Set(xs.filter(Boolean))].slice(0, 2).join(", ");
+    try {
+      const u = new URL(PHOTON); u.searchParams.set("q", q); u.searchParams.set("limit", "8"); u.searchParams.set("bbox", "-73.6,-55.1,-53.6,-21.7");
+      if (b) { u.searchParams.set("lat", b.lat); u.searchParams.set("lon", b.lng); }
+      const j = await (await fetch(u)).json();
+      out = (j.features || []).filter(f => !f.properties.countrycode || f.properties.countrycode === "AR").map(f => {
+        const p = f.properties, n = p.name || [p.street, p.housenumber].filter(Boolean).join(" ");
+        return { n, d: det(p.city || p.locality || p.district || p.county, p.state), lat: +f.geometry.coordinates[1].toFixed(6), lng: +f.geometry.coordinates[0].toFixed(6) };
+      }).filter(x => x.n);
+    } catch (_) {}
+    if (!out.length) {
+      try {
+        const u = new URL(NOMINATIM); u.searchParams.set("q", q); u.searchParams.set("format", "jsonv2"); u.searchParams.set("countrycodes", "ar"); u.searchParams.set("limit", "6"); u.searchParams.set("accept-language", "es");
+        const j = await (await fetch(u)).json();
+        out = (j || []).map(x => { const parts = String(x.display_name || "").split(",").map(t => t.trim()); return { n: x.name || parts[0], d: det(parts[1], parts[2]), lat: +(+x.lat).toFixed(6), lng: +(+x.lon).toFixed(6) }; }).filter(x => x.n);
+      } catch (_) {}
+    }
+    const vistos = new Set(); out = out.filter(x => { const kk = x.n + "|" + x.d; if (vistos.has(kk)) return false; vistos.add(kk); return true; }).slice(0, 7);
+    cacheLugares.set(k, out); return out;
+  }
+  // Cerca de dónde buscar: la parada elegida del viaje (carga o bajada)
+  function sesgoUbi(box) {
+    if (!viajeSel) return null;
+    const esCarga = box.id === "ubi-c", v = $(esCarga ? "r-d" : "r-h").value;
+    if (v === "x" && busqueda) { const p = esCarga ? busqueda.o : busqueda.d; return p && p.lat != null ? p : null; }
+    const s = paradasDe(viajeSel)[+v]; return s && s.lat != null ? s : null;
+  }
+  function verEnMapa(lat, lng) { const a = el("a", null, "Ver en el mapa"); a.href = "https://www.google.com/maps/search/?api=1&query=" + lat + "," + lng; a.target = "_blank"; a.rel = "noopener"; return a; }
   function prepararUbi(box) {
     const estado = box.querySelector("[data-estado]"), link = box.querySelector("[data-link]");
-    const set = (u, msg, err) => { box._ubi = u; estado.textContent = msg || ""; estado.classList.toggle("err", !!err); };
+    const set = (u, msg, err) => { box._ubi = u; estado.textContent = msg || ""; estado.classList.toggle("err", !!err); if (u && u.lat != null && !err) estado.append(" ", verEnMapa(u.lat, u.lng)); };
     box._set = set;
+    const bus = box.querySelector("[data-buscar]"), lista = box.querySelector(".loc-list");
+    let espera = null, turno = 0, items = [], marcado = -1;
+    const cerrar = () => { lista.hidden = true; bus.setAttribute("aria-expanded", "false"); bus.removeAttribute("aria-activedescendant"); marcado = -1; };
+    const elegir = it => {
+      bus.value = it.n; cerrar(); link.value = "";
+      set({ lat: it.lat, lng: it.lng, link: null }, "✓ " + it.n + (it.d ? " · " + it.d : "") + ".");
+    };
+    const marcar = i => { marcado = i; lista.querySelectorAll("button").forEach((b, j) => { b.setAttribute("aria-selected", String(j === i)); if (j === i) { bus.setAttribute("aria-activedescendant", b.id); b.scrollIntoView({ block: "nearest" }); } }); };
+    const pintar = () => {
+      lista.replaceChildren();
+      if (!items.length) lista.append(el("li", "nada", "No lo encontramos. Probá con otro nombre, tocá \"Estoy ahí ahora\" o pegá el link de Google Maps."));
+      items.forEach((it, i) => {
+        const li = el("li"), b = el("button"); b.type = "button"; b.id = bus.id + "-op" + i; b.setAttribute("role", "option");
+        b.append(el("span", null, it.n)); if (it.d) b.append(el("br"), el("small", null, it.d));
+        b.addEventListener("mousedown", e => e.preventDefault()); b.addEventListener("click", () => elegir(it));
+        li.append(b); lista.append(li);
+      });
+      lista.hidden = false; bus.setAttribute("aria-expanded", "true");
+    };
+    bus.addEventListener("input", () => {
+      clearTimeout(espera); const q = bus.value.trim(), mio = ++turno;
+      if (q.length < 3) return cerrar();
+      espera = setTimeout(async () => {
+        lista.replaceChildren(el("li", "nada", "Buscando…")); lista.hidden = false;
+        const r = await buscarLugares(q, sesgoUbi(box));
+        if (mio !== turno) return; items = r; marcado = -1; pintar();
+      }, 350);
+    });
+    bus.addEventListener("keydown", e => {
+      if (lista.hidden || !items.length) return;
+      if (e.key === "ArrowDown") { e.preventDefault(); marcar(Math.min(items.length - 1, marcado + 1)); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); marcar(Math.max(0, marcado - 1)); }
+      else if (e.key === "Enter") { e.preventDefault(); elegir(items[Math.max(0, marcado)]); }
+      else if (e.key === "Escape") { e.preventDefault(); cerrar(); }
+    });
+    bus.addEventListener("blur", () => setTimeout(cerrar, 150));
     box.querySelector("[data-gps]").addEventListener("click", ev => {
       const b = ev.currentTarget;
       if (!navigator.geolocation) return set(null, "Este celular no deja usar el GPS. Pegá el link de Google Maps.", true);
       b.disabled = true; set(box._ubi, "Buscando tu ubicación…");
       navigator.geolocation.getCurrentPosition(p => {
-        b.disabled = false; link.value = "";
+        b.disabled = false; link.value = ""; bus.value = "";
         set({ lat: +p.coords.latitude.toFixed(6), lng: +p.coords.longitude.toFixed(6), link: null }, "✓ Ubicación guardada" + (p.coords.accuracy ? " (precisión " + Math.round(p.coords.accuracy) + " m)" : "") + ".");
       }, e => { b.disabled = false; set(null, e.code === 1 ? "No diste permiso para usar la ubicación. Activalo o pegá el link de Google Maps." : "No pudimos tomar la ubicación. Probá afuera o pegá el link.", true); },
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 });
     });
     link.addEventListener("input", () => {
       const v = link.value.trim(); if (!v) return set(null, "");
+      bus.value = "";
       const c = leerCoords(v); if (c) return set({ lat: c.lat, lng: c.lng, link: null }, "✓ Ubicación guardada.");
       const url = (v.match(/https:\/\/\S+/) || [])[0];
       if (url && /(google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps|maps\.google\.)/i.test(url)) return set({ lat: null, lng: null, link: url.slice(0, 300) }, "✓ Link de Google Maps guardado.");
