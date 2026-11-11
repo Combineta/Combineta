@@ -302,6 +302,10 @@ dl.resumen { margin: 0; }
 .opiniones { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .opiniones li { background: var(--bg); border-radius: 10px; padding: 8px 10px; font-size: 15px; }
 .foot a { color: inherit; }
+.cargo-linea { font-weight: 800; }
+.pago-box { display: flex; flex-direction: column; gap: 8px; border: 2px solid var(--dorado); border-radius: 12px; padding: 12px; background: var(--surface); }
+.pago-box strong { font-size: 18px; }
+.pago-ok { color: var(--ok); font-weight: 800; }
 .caja-app { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
 .caja-app h2 { margin: 0; font-size: 20px; }
 .caja-btns { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -626,7 +630,7 @@ dl.resumen { margin: 0; }
 
   <section class="view" id="v-condiciones" aria-labelledby="t-cond" hidden>
     <h1 id="t-cond">Condiciones de uso y privacidad</h1>
-    <p class="hint">Versión 1 · noviembre de 2026</p>
+    <p class="hint">Versión 2 · noviembre de 2026</p>
     <div class="legal">
       <p class="note"><strong>En pocas palabras:</strong> Combineta solo conecta viajes. El transporte lo hace, lo cobra y lo responde el transportista. El transportista tiene que tener seguro y habilitación, y el dueño tiene que tener los papeles del caballo al día.</p>
       <h2>1. Qué es Combineta</h2>
@@ -637,8 +641,10 @@ dl.resumen { margin: 0; }
       <p>Tener los papeles del caballo al día: el DT-e (documento de tránsito electrónico de SENASA), el análisis de anemia infecciosa equina (AIE) vigente y lo que pida cada provincia. Avisar el estado de salud y el carácter del caballo, y tenerlo listo en el lugar y a la hora acordados.</p>
       <h2>4. Lo que Combineta no cubre</h2>
       <p>Combineta no se hace responsable por accidentes, lesiones, enfermedades o muerte de animales, robos, demoras, cancelaciones, daños a personas o cosas, ni por lo que no cumpla alguna de las partes. Recomendamos que cada viaje tenga seguro. Las comprobaciones que muestra la app (por ejemplo, "Papeles revisados") dicen lo que revisamos en una fecha: no son una garantía.</p>
-      <h2>5. Precios y pagos</h2>
-      <p>Los precios los pone el transportista. El precio de un tramo es una estimación proporcional a los kilómetros. Por ahora los pagos se arreglan directamente entre las partes. Más adelante Combineta podrá cobrar un cargo por el servicio, que siempre se va a mostrar antes de confirmar.</p>
+      <h2>5. Precios, cargo de Combineta y devoluciones</h2>
+      <p>Los precios del viaje los pone el transportista. El precio de un tramo es una estimación proporcional a los kilómetros. El precio del viaje se le paga directamente al transportista, como acuerden.</p>
+      <p>Por usar Combineta, quien pide lugar paga un <strong>cargo por servicio</strong> (hoy, el 5% del precio del viaje, con un mínimo de $5.000). El cargo se muestra antes de pedir lugar y se paga con Mercado Pago recién cuando el transportista confirma. Con el pago, el lugar queda asegurado y se comparten los contactos.</p>
+      <p><strong>Devoluciones del cargo:</strong> si cancela el transportista, se devuelve siempre. Si cancela quien pidió lugar con más de 48 horas de anticipación, también se devuelve. Con menos de 48 horas, no se devuelve. Las devoluciones se hacen al mismo medio de pago y pueden tardar unos días en verse, según la tarjeta.</p>
       <h2>6. Reglas de la comunidad</h2>
       <ul>
         <li>No pedir ni pasar los códigos que llegan por SMS o WhatsApp.</li>
@@ -661,7 +667,7 @@ dl.resumen { margin: 0; }
       <h2 id="privacidad">Política de privacidad</h2>
       <p><strong>Qué datos guardamos:</strong> tu celular (para entrar), tu nombre y WhatsApp, los viajes, pedidos y solicitudes que cargás, la ubicación del campo (si la cargás), los mensajes del chat, las calificaciones y, si los activás, los avisos al celular.</p>
       <p><strong>Para qué:</strong> para que la app funcione (mostrar viajes, conectar a las partes, avisarte novedades) y para prevenir fraudes.</p>
-      <p><strong>Quién ve qué:</strong> los viajes se ven sin teléfono. El WhatsApp se comparte entre el dueño y el transportista recién cuando hay un lugar confirmado. La ubicación del campo solo la ve el transportista de ese viaje. Los mensajes solo los ven las dos partes (y Combineta si hay una denuncia o una alerta).</p>
+      <p><strong>Quién ve qué:</strong> los viajes se ven sin teléfono. El WhatsApp se comparte entre el dueño y el transportista recién cuando hay un lugar confirmado (y, si corresponde, pagado). Los pagos los procesa Mercado Pago: Combineta no ve ni guarda los datos de tu tarjeta. La ubicación del campo solo la ve el transportista de ese viaje. Los mensajes solo los ven las dos partes (y Combineta si hay una denuncia o una alerta).</p>
       <p><strong>No vendemos tus datos.</strong> Los guardan los servicios que hacen funcionar la app (la base de datos, la página y el envío de SMS).</p>
       <p><strong>Tus derechos:</strong> según la Ley 25.326 de Protección de Datos Personales, podés pedir ver, corregir o borrar tus datos escribiendo a <a href="mailto:combineta.ar@gmail.com">combineta.ar@gmail.com</a>. El órgano de control es la Agencia de Acceso a la Información Pública.</p>
       <p><strong>Cuánto tiempo:</strong> mientras uses la cuenta. Los chats con denuncias se guardan hasta resolverlas.</p>
@@ -812,7 +818,8 @@ dl.resumen { margin: 0; }
       <li>El transportista tiene que tener seguro y habilitación. El dueño, los papeles del caballo al día (DT-e y anemia).</li>
       <li>Combineta no se hace cargo de accidentes, lesiones o muerte de animales, ni de lo que se arregle entre las partes.</li>
       <li>No pases códigos, no pagues señas antes de que te confirmen y no arreglen por fuera. El chat avisa si detecta algo raro.</li>
-      <li>El WhatsApp se comparte recién cuando el lugar está confirmado.</li>
+      <li>Combineta cobra un cargo por servicio (hoy 5% del viaje, mínimo $5.000) cuando el transportista confirma. Si cancela él, o vos con más de 48 h, te lo devolvemos.</li>
+      <li>El WhatsApp se comparte recién cuando el lugar está confirmado y pagado.</li>
     </ul>
     <p><a href="#condiciones" target="_blank" rel="noopener">Leer las condiciones y la privacidad completas</a></p>
     <label class="check-grande"><input type="checkbox" id="cond-ok"> <span>Leí y acepto las Condiciones de uso y la Política de privacidad</span></label>
@@ -1330,7 +1337,7 @@ dl.resumen { margin: 0; }
   // ================= Datos =================
   let VIAJES = [], PEDIDOS = [], PERFILES = {}, cargado = false;
   async function cargar() {
-    const hoy = hoyISO(), repP = cargarReputaciones();
+    const hoy = hoyISO(), repP = Promise.all([cargarReputaciones(), cargarCobro()]);
     try {
       const [v, p, per] = await Promise.all([
         api("GET", "viajes?select=" + VCOLS + "&activo=is.true&cerrado=is.false&fecha=gte." + hoy + "&order=fecha.asc,hora.asc"),
@@ -1544,6 +1551,11 @@ dl.resumen { margin: 0; }
     const pr = textoPrecio(v, m, cab);
     box.append(el("strong", null, pr.linea), el("span", null, m.libres > 0 ? plural(m.libres, "lugar libre en ese tramo", "lugares libres en ese tramo") : "No queda lugar en ese tramo"));
     if (pr.detalle) box.append(el("span", "hint", pr.detalle));
+    if (COBRO.activo) {
+      const pt = precioTramo(v, m), total = pt.cab != null ? pt.cab * cab : null, cg = cargoDe(total, v.moneda || "ARS");
+      box.append(el("span", "cargo-linea", "+ Cargo de Combineta: " + fmtMon(cg, "ARS") + (total != null && (v.moneda || "ARS") === "ARS" && cg > COBRO.minimo ? " (" + String(COBRO.porcentaje).replace(".", ",") + "%)" : "")),
+        el("span", "hint", "El cargo lo pagás por la app recién cuando el transportista confirme tu lugar." + (total != null ? " El viaje (" + fmtMon(total, v.moneda || "ARS") + ") se lo pagás a él como acuerden." : " El precio del viaje lo arreglás con él.")));
+    }
     $("r-desvio").hidden = !m.nueva;
     $("r-desvio").textContent = m.fuera ? "Le pedís que se desvíe ≈ " + fmtKm(m.extra) + " para buscar o dejar tu caballo. Es más de lo que suele aceptar, así que él decide: si dice que sí, te lo confirma. El desvío se puede cobrar aparte."
       : m.desvio ? "Para cargar o bajar fuera de sus paradas hace falta un desvío de ≈ " + fmtKm(m.extra) + ". El transportista lo tiene que aprobar."
@@ -2343,7 +2355,9 @@ dl.resumen { margin: 0; }
     else if (r.desvio) rr.append(el("span", "tag por", "Carga en " + r.carga_en + ": tu viaje pasa por ahí, pero no es una de tus paradas. Confirmar significa que parás"));
     const acts = el("div", "res-actions");
     acts.append(botonChat(r, v, r.nombre));
-    if (r.estado === "confirmada") {
+    if (r.estado === "confirmada" && r.pago_estado === "falta") rr.append(el("span", "hint", "⏳ Falta que " + r.nombre.split(" ")[0] + " pague el cargo de Combineta (" + fmtMon(r.cargo, "ARS") + "). Cuando pague, te avisamos y te aparece su WhatsApp."));
+    if (r.estado === "confirmada" && r.pago_estado === "pagado") rr.append(el("span", "pago-ok", "✓ Pagó el cargo de Combineta: el lugar está asegurado."));
+    if (r.estado === "confirmada" && pagoOk(r)) {
       const wa = el("a", "btn btn-wa btn-sm", "WhatsApp"); wa.target = "_blank"; wa.rel = "noopener";
       wa.href = waLink(r.whatsapp, "Hola " + r.nombre + ", soy " + v.nombre + " (Combineta), por tu lugar en mi viaje del " + fcorta(v.fecha) + " (" + tramoTexto(v, r) + ")."); acts.append(wa);
     }
@@ -2375,14 +2389,16 @@ dl.resumen { margin: 0; }
       head.append(t, el("span", "pill " + r.estado, ESTADOS[r.estado])); box.append(head);
       if (r.precio_estimado != null) box.append(el("span", "meta", "Precio estimado: " + fmtMon(r.precio_estimado, r.moneda) + " por caballo · Total " + fmtMon(r.precio_estimado * r.caballos, r.moneda)));
       if (r.estado === "pendiente") box.append(el("span", "hint", "Todavía no reserva lugar: falta que el transportista confirme."));
+      const pg = cajaPago(r, v); if (pg) box.append(pg);
       if (v.cerrado || v.activo === false) box.append(el("span", "warn", "El transportista " + (v.cerrado ? "cerró" : "pausó") + " este viaje."));
       const acts = el("div", "res-actions");
       if (v.id) acts.append(botonChat(r, v, v.nombre || "el transportista"));
       if (v.id && (r.estado === "pendiente" || r.estado === "confirmada")) {
         const wa = el("a", "btn btn-wa btn-sm", "WhatsApp al transportista"); wa.target = "_blank"; wa.rel = "noopener"; wa.hidden = true; acts.append(wa);
-        contactoViaje(v.id).then(num => { if (num) { wa.href = waLink(num, "Hola " + v.nombre + ", te escribo por mi lugar en tu viaje del " + fcorta(v.fecha) + " (Combineta)."); wa.hidden = false; } });
+        if (r.estado === "confirmada" && pagoOk(r)) contactoViaje(v.id).then(num => { if (num) { wa.href = waLink(num, "Hola " + v.nombre + ", te escribo por mi lugar en tu viaje del " + fcorta(v.fecha) + " (Combineta)."); wa.hidden = false; } });
         const c = el("button", "btn btn-ghost btn-sm", r.estado === "pendiente" ? "Retirar solicitud" : "Cancelar mi lugar"); c.type = "button";
         c.addEventListener("click", () => { if (confirmarDos(c)) accion(c, "cancelar_reserva", r.id, "Listo, se canceló."); }); acts.append(c);
+        if (r.pago_estado === "pagado") box.append(el("span", "hint", "Si cancelás con más de " + COBRO.horas_devolucion + " h de anticipación, te devolvemos el cargo. Con menos, no se devuelve."));
       }
       box.append(acts);
       if (v.id && r.estado === "confirmada" && v.fecha <= hoyISO()) box.append(cajaCalificar(r, v));
@@ -2597,7 +2613,7 @@ dl.resumen { margin: 0; }
   });
 
   // ================= Condiciones de uso =================
-  const COND_V = "2026-11";
+  const COND_V = "2026-11b";
   const dlgCond = $("dlg-cond"); let condRes = null;
   async function guardarAceptacion() {
     const k = COND_V + ":" + miId();
@@ -2765,6 +2781,61 @@ dl.resumen { margin: 0; }
     box.append(fila, ta, ok);
     return box;
   }
+
+  // ================= Cobro del cargo de Combineta (Mercado Pago) =================
+  let COBRO = { activo: false, porcentaje: 5, minimo: 5000, horas_devolucion: 48 };
+  async function cargarCobro() {
+    try { const c = await api("GET", "cobro_config?select=activo,porcentaje,minimo,horas_devolucion&id=eq.1"); if (c && c[0]) COBRO = c[0]; } catch (_) {}
+  }
+  // Igual que en la base: % del precio del viaje, con un mínimo (solo en pesos)
+  function cargoDe(total, moneda) {
+    if (total == null || moneda !== "ARS") return COBRO.minimo;
+    return Math.max(COBRO.minimo, Math.round(COBRO.porcentaje / 100 * total));
+  }
+  const pagoOk = r => !r.pago_estado || r.pago_estado === "pagado";
+  function cajaPago(r, v) {
+    if (r.pago_estado === "falta" && r.estado === "confirmada") {
+      const box = el("div", "pago-box");
+      box.append(el("strong", null, "¡" + (v.nombre || "El transportista") + " confirmó tu lugar!"),
+        el("span", null, "Para asegurarlo, pagá el cargo de Combineta: " + fmtMon(r.cargo, "ARS") + ". Podés pagar con tarjeta, débito o dinero en Mercado Pago."),
+        el("span", "hint", "Cuando pagues, te aparece el WhatsApp del transportista. El precio del viaje se lo pagás a él."));
+      const b = el("button", "btn btn-gold", "Pagar " + fmtMon(r.cargo, "ARS") + " con Mercado Pago"); b.type = "button";
+      b.addEventListener("click", () => pagarCargo(r, b));
+      box.append(b); return box;
+    }
+    const txt = { pagado: ["pago-ok", "✓ Pagaste el cargo de Combineta (" + fmtMon(r.cargo, "ARS") + "): tu lugar está asegurado."],
+      devolviendo: ["hint", "Te estamos devolviendo el cargo de Combineta (" + fmtMon(r.cargo, "ARS") + ") a tu Mercado Pago o tarjeta."],
+      devuelto: ["pago-ok", "✓ Te devolvimos el cargo de Combineta (" + fmtMon(r.cargo, "ARS") + "). Según la tarjeta, puede tardar unos días en verse."],
+      sin_devolucion: ["hint", "Cancelaste con menos de " + COBRO.horas_devolucion + " h de anticipación: el cargo de Combineta no se devuelve."] }[r.pago_estado];
+    return txt ? el("span", txt[0], txt[1]) : null;
+  }
+  async function pagarCargo(r, b) {
+    const t = b.textContent; b.disabled = true; b.textContent = "Abriendo Mercado Pago…";
+    try {
+      await asegurarSesion();
+      let res;
+      try {
+        res = await fetch(SUPABASE_URL + "/functions/v1/mp", { method: "POST",
+          headers: { "Content-Type": "application/json", apikey: SUPABASE_KEY, Authorization: "Bearer " + sesion.access_token },
+          body: JSON.stringify({ accion: "crear", reserva: r.id }) });
+      } catch (_) { throw new Error("Sin conexión. Revisá internet y probá de nuevo."); }
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.url) throw new Error(d.message || "No pudimos abrir el pago. Probá de nuevo en un rato.");
+      store.set("pago-en-curso", r.id);
+      location.href = d.url;
+    } catch (e) { toast(e.message); b.disabled = false; b.textContent = t; }
+  }
+  // Vuelta desde Mercado Pago
+  (function volverDePago() {
+    const q = new URLSearchParams(location.search), est = q.get("pago");
+    if (!est) return;
+    history.replaceState(null, "", location.pathname + (location.hash || "#mis"));
+    const msj = { ok: "¡Listo! Recibimos tu pago. Tu lugar está asegurado y ya podés ver el WhatsApp del transportista.",
+      pendiente: "Tu pago quedó pendiente (por ejemplo, si pagaste en efectivo). Cuando se acredite, te avisamos.",
+      error: "El pago no se completó. Podés intentar de nuevo desde Mis viajes." }[est];
+    if (msj) setTimeout(() => toast(msj), 600);
+    if (est === "ok") [2500, 7000].forEach(ms => setTimeout(() => { if (vista === "mis") cargarMis(); }, ms));
+  })();
   wizard($("f-sumarme"));
   restaurarBorrador();
   mostrar(location.hash.slice(1) || "buscar");
