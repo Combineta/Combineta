@@ -190,7 +190,7 @@ dialog::backdrop { background: rgba(8, 20, 33, 0.55); }
 
 /* Navegación de abajo */
 .tabbar { position: fixed; inset: auto 0 0 0; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 5; }
-.tabbar .wrap { display: grid; grid-template-columns: repeat(3, 1fr); }
+.tabbar .wrap { display: grid; grid-template-columns: repeat(4, 1fr); }
 .tabbar a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 10px; text-decoration: none; font-size: 13px; font-weight: 800; color: var(--muted); min-height: 64px; justify-content: center; }
 .tabbar a[aria-current="page"] { color: var(--azul); }
 :root:not([data-theme="light"]) .tabbar a[aria-current="page"] { color: var(--celeste); }
@@ -306,6 +306,30 @@ dl.resumen { margin: 0; }
 .pago-box { display: flex; flex-direction: column; gap: 8px; border: 2px solid var(--dorado); border-radius: 12px; padding: 12px; background: var(--surface); }
 .pago-box strong { font-size: 18px; }
 .pago-ok { color: var(--ok); font-weight: 800; }
+.sobre { position: relative; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 12px; color: inherit; flex: none; }
+.sobre svg { width: 28px; height: 28px; }
+.sobre:hover { background: rgba(255,255,255,0.12); }
+.ico-badge { position: relative; display: inline-grid; }
+.badge { position: absolute; top: -4px; right: -8px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--bad); color: #fff; font-size: 12px; font-weight: 900; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums; border: 2px solid var(--surface); }
+.sobre .badge { top: 2px; right: 0; border-color: var(--azul); }
+.bandeja-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.avisos-lista, .convers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.aviso, .conv { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; cursor: pointer; font: inherit; color: inherit; min-height: 64px; }
+.aviso .ic, .conv .ic { font-size: 22px; text-align: center; }
+.aviso .tx, .conv .tx { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.aviso .tx small, .conv .tx small { color: var(--muted); font-size: 13px; }
+.conv .tx b { font-size: 17px; }
+.conv .ult { color: var(--muted); font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aviso.nueva, .conv.nueva { border: 2px solid var(--azul); }
+.aviso.nueva .tx span { font-weight: 800; }
+.aviso .tx span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.estado-conv { font-size: 13px; font-weight: 800; color: var(--azul); }
+:root:not([data-theme="light"]) .estado-conv { color: var(--celeste); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .estado-conv { color: var(--azul); } }
+:root[data-theme="light"] .estado-conv { color: var(--azul); }
+.aviso:not(.nueva) { opacity: 0.75; }
+.aviso .lado, .conv .lado { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--bad); display: inline-block; }
 .caja-app { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
 .caja-app h2 { margin: 0; font-size: 20px; }
 .caja-btns { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -401,6 +425,7 @@ dl.resumen { margin: 0; }
       <span class="brand-name">Combineta</span>
     </a>
     <span class="brand-tag">Viajes compartidos<br>para caballos</span>
+    <a class="sobre" href="#mensajes" id="sobre-top" aria-label="Mensajes y avisos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg><span class="badge" data-badge hidden></span></a>
   </div>
 </header>
 <div class="stripe" aria-hidden="true"></div>
@@ -628,6 +653,19 @@ dl.resumen { margin: 0; }
     <div class="list" id="l-mis-ped"></div>
   </section>
 
+  <section class="view" id="v-mensajes" aria-labelledby="t-mensajes" hidden>
+    <div class="bandeja-head">
+      <h1 id="t-mensajes">Mensajes</h1>
+      <button type="button" class="linkbtn" id="b-leer-todo" hidden>Marcar todo como leído</button>
+    </div>
+    <p class="status" id="s-bandeja" role="status"></p>
+    <h2 class="sub-lista">Avisos</h2>
+    <ul class="avisos-lista" id="l-avisos"></ul>
+    <h2 class="sub-lista">Conversaciones</h2>
+    <p class="hint">Todo lo que hablaste con cada transportista o dueño queda guardado acá, viaje por viaje.</p>
+    <ul class="convers" id="l-convers"></ul>
+  </section>
+
   <section class="view" id="v-condiciones" aria-labelledby="t-cond" hidden>
     <h1 id="t-cond">Condiciones de uso y privacidad</h1>
     <p class="hint">Versión 2 · noviembre de 2026</p>
@@ -710,6 +748,7 @@ dl.resumen { margin: 0; }
     <a href="#buscar" data-view="buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>Buscar</a>
     <a href="#publicar" data-view="publicar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Publicar</a>
     <a href="#mis" data-view="mis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 16h2l1.5-5h10l2.5 5h4"/><path d="M5.5 11 8 6h7l3 5"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>Mis viajes</a>
+    <a href="#mensajes" data-view="mensajes"><span class="ico-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg><span class="badge" data-badge hidden></span></span>Mensajes</a>
   </div>
 </nav>
 
@@ -2430,7 +2469,7 @@ dl.resumen { margin: 0; }
     try { await api("POST", "rpc/" + fn, { reserva: id }, { auth: true }); toast(ok); await refrescarTodo(); }
     catch (e) { toast(e.message); btn.disabled = false; }
   }
-  async function refrescarTodo() { await cargar(); if (vista === "mis") await cargarMis(); }
+  async function refrescarTodo() { await cargar(); if (vista === "mis") await cargarMis(); if (vista === "mensajes") await cargarBandeja(); else contarNoLeidas(); }
 
   // Hoja de ruta: paradas en orden, con el punto exacto de cada campo
   function hojaDeRuta(v, reservas) {
@@ -2561,12 +2600,13 @@ dl.resumen { margin: 0; }
   function irA(v) { if (location.hash !== "#" + v) location.hash = v; else mostrar(v); }
   function mostrar(v) {
     if (v.startsWith("viaje=")) { viajeFoco = v.slice(6); v = "buscar"; if (cargado) setTimeout(abrirFoco, 0); }
-    if (!["buscar", "publicar", "mis", "condiciones"].includes(v)) v = "buscar";
+    if (!["buscar", "publicar", "mis", "mensajes", "condiciones"].includes(v)) v = "buscar";
     vista = v;
     if (dlg.open) dlg.close();
-    ["buscar", "publicar", "mis", "condiciones"].forEach(k => { $("v-" + k).hidden = k !== v; });
+    ["buscar", "publicar", "mis", "mensajes", "condiciones"].forEach(k => { $("v-" + k).hidden = k !== v; });
     document.querySelectorAll(".tabbar a").forEach(a => { if (a.dataset.view === v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
     if (v === "mis") cargarMis();
+    if (v === "mensajes") cargarBandeja();
     if (v === "publicar" && $("f-viaje").hidden && $("f-pedido").hidden && $("publicado").hidden) setSeg("viaje");
     window.scrollTo(0, 0);
   }
@@ -2665,9 +2705,14 @@ dl.resumen { margin: 0; }
     $("ch-den").hidden = true; $("ch-den-txt").value = "";
     if (dlgChat.showModal) dlgChat.showModal(); else dlgChat.setAttribute("open", "");
     leerChat(true);
+    leerAvisos(r.id);
     clearInterval(chatTimer); chatTimer = setInterval(() => { if (document.visibilityState === "visible") leerChat(false); }, 5000);
   }
-  function cerrarChat() { clearInterval(chatTimer); chatTimer = null; if (dlgChat.open) dlgChat.close(); const habia = chat; chat = null; if (habia && vista === "mis") cargarMis(); }
+  function cerrarChat() {
+    clearInterval(chatTimer); chatTimer = null; if (dlgChat.open) dlgChat.close(); const habia = chat; chat = null;
+    if (habia && vista === "mis") cargarMis();
+    if (habia && vista === "mensajes") cargarBandeja(); else contarNoLeidas();
+  }
   $("ch-cerrar").addEventListener("click", cerrarChat);
   dlgChat.addEventListener("cancel", e => { e.preventDefault(); cerrarChat(); });
   async function leerChat(primera) {
@@ -2836,10 +2881,103 @@ dl.resumen { margin: 0; }
     if (msj) setTimeout(() => toast(msj), 600);
     if (est === "ok") [2500, 7000].forEach(ms => setTimeout(() => { if (vista === "mis") cargarMis(); }, ms));
   })();
+
+  // ================= Bandeja: mensajes y avisos (el sobre) =================
+  const ICONO_AVISO = { solicitud: "📩", confirmada: "✅", rechazada: "❌", cancelada: "↩️", anulada: "↩️", mensaje: "💬", pago: "💰" };
+  function haceCuanto(iso) {
+    const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (m < 1) return "recién"; if (m < 60) return "hace " + m + " min";
+    const h = Math.round(m / 60); if (h < 24) return "hace " + h + " h";
+    const d = new Date(iso); return fcorta(isoDe(d));
+  }
+  function ponerBadge(n) {
+    document.querySelectorAll("[data-badge]").forEach(b => { b.hidden = !n; b.textContent = n > 99 ? "99+" : String(n || ""); });
+    $("sobre-top").setAttribute("aria-label", n ? "Mensajes y avisos: " + n + " sin leer" : "Mensajes y avisos");
+    try { if (navigator.setAppBadge) { if (n) navigator.setAppBadge(n); else navigator.clearAppBadge(); } } catch (_) {}
+  }
+  async function contarNoLeidas() {
+    if (!miId()) return ponerBadge(0);
+    try { const r = await api("GET", "notificaciones?select=id&leida=eq.false&limit=100", undefined, { auth: true }); ponerBadge((r || []).length); } catch (_) {}
+  }
+  async function leerAvisos(reserva) {
+    if (!miId()) return;
+    try { await api("POST", "rpc/leer_avisos", { reserva: reserva || null }, { auth: true }); } catch (_) {}
+    contarNoLeidas();
+  }
+  let BANDEJA = { convers: {} };
+  async function cargarBandeja() {
+    const s = $("s-bandeja"), la = $("l-avisos"), lc = $("l-convers");
+    if (!miId()) {
+      la.replaceChildren(); lc.replaceChildren(); $("b-leer-todo").hidden = true;
+      s.textContent = "Cuando pidas lugar o publiques un viaje, acá vas a ver los avisos y las conversaciones.";
+      return;
+    }
+    s.textContent = "Cargando…"; s.classList.remove("err");
+    try {
+      const uid = miId();
+      const [nots, mv, mr, ms] = await Promise.all([
+        api("GET", "notificaciones?select=id,tipo,reserva_id,texto,cantidad,leida,creado&order=id.desc&limit=40", undefined, { auth: true }),
+        api("GET", "viajes?select=" + VCOLS + "&owner=eq." + uid),
+        api("GET", "reservas?select=*,viajes(" + VCOLS + ")&owner=eq." + uid),
+        api("GET", "mensajes?select=reserva_id,id,autor,texto,creado&order=id.desc&limit=500", undefined, { auth: true }).catch(() => [])
+      ]);
+      const ids = (mv || []).map(v => v.id), porId = {}; (mv || []).forEach(v => { porId[v.id] = v; });
+      const rs = ids.length ? await api("GET", "reservas?select=*&viaje_id=in.(" + ids.join(",") + ")") : [];
+      const ultimo = {}; (ms || []).forEach(m => { if (!ultimo[m.reserva_id]) ultimo[m.reserva_id] = m; });
+      const noLeidoPor = {}; (nots || []).forEach(n => { if (!n.leida && n.reserva_id) noLeidoPor[n.reserva_id] = true; });
+      const convers = [
+        ...(mr || []).filter(r => r.viajes).map(r => ({ r, v: r.viajes, con: r.viajes.nombre || "El transportista", rol: "Transportista" })),
+        ...(rs || []).map(r => ({ r, v: porId[r.viaje_id], con: r.nombre, rol: "Dueño del caballo" }))
+      ];
+      convers.forEach(c => { c.ult = ultimo[c.r.id]; c.cuando = c.ult ? c.ult.creado : c.r.creado; });
+      convers.sort((a, b) => String(b.cuando).localeCompare(String(a.cuando)));
+      BANDEJA.convers = {}; convers.forEach(c => { BANDEJA.convers[c.r.id] = c; });
+      s.textContent = "";
+      // Avisos
+      la.replaceChildren();
+      if (!(nots || []).length) la.append(el("li", "status", "No tenés avisos todavía."));
+      (nots || []).forEach(n => {
+        const li = el("li"), b = el("button", "aviso" + (n.leida ? "" : " nueva")); b.type = "button";
+        const tx = el("span", "tx");
+        tx.append(el("span", null, n.tipo === "mensaje" && n.cantidad > 1 ? n.cantidad + " mensajes nuevos. Último: " + n.texto : n.texto));
+        const lado = el("span", "lado", haceCuanto(n.creado)); if (!n.leida) lado.append(el("span", "dot"));
+        b.append(el("span", "ic", ICONO_AVISO[n.tipo] || "🔔"), tx, lado);
+        b.addEventListener("click", () => abrirAviso(n));
+        li.append(b); la.append(li);
+      });
+      $("b-leer-todo").hidden = !(nots || []).some(n => !n.leida);
+      // Conversaciones
+      lc.replaceChildren();
+      if (!convers.length) lc.append(el("li", "status", "Todavía no tenés conversaciones. Empiezan cuando pedís lugar en un viaje o te piden lugar en el tuyo."));
+      convers.forEach(c => {
+        const li = el("li"), b = el("button", "conv" + (noLeidoPor[c.r.id] ? " nueva" : "")); b.type = "button";
+        const tx = el("span", "tx");
+        tx.append(el("b", null, c.con), el("small", null, c.rol + " · " + (c.v ? tramoTexto(c.v, c.r) + " · " + fcorta(c.v.fecha) : "")),
+          el("span", "estado-conv", ESTADOS[c.r.estado] || c.r.estado),
+          el("span", "ult", c.ult ? (c.ult.autor === uid ? "Vos: " : "") + c.ult.texto : "Todavía no hay mensajes."));
+        const lado = el("span", "lado", c.ult ? haceCuanto(c.ult.creado) : "");
+        if (noLeidoPor[c.r.id]) lado.append(el("span", "dot"));
+        b.append(el("span", "ic", c.rol === "Transportista" ? "🚛" : "🐴"), tx, lado);
+        b.setAttribute("aria-label", "Conversación con " + c.con + (noLeidoPor[c.r.id] ? ", con novedades" : ""));
+        b.addEventListener("click", () => abrirChat(c.r, c.v, c.con));
+        li.append(b); lc.append(li);
+      });
+      ponerBadge((nots || []).filter(n => !n.leida).length);
+    } catch (e) { s.textContent = "No pudimos cargar tus mensajes. " + e.message; s.classList.add("err"); }
+  }
+  function abrirAviso(n) {
+    const c = n.reserva_id && BANDEJA.convers[n.reserva_id];
+    if (n.tipo === "mensaje" && c) return abrirChat(c.r, c.v, c.con);
+    leerAvisos(n.reserva_id);
+    location.hash = "#mis";
+  }
+  $("b-leer-todo").addEventListener("click", async () => { await leerAvisos(null); cargarBandeja(); });
+  setInterval(() => { if (document.visibilityState === "visible" && !chat) { if (vista === "mensajes") cargarBandeja(); else contarNoLeidas(); } }, 45000);
   wizard($("f-sumarme"));
   restaurarBorrador();
   mostrar(location.hash.slice(1) || "buscar");
   cargar();
+  contarNoLeidas();
 })();
 </script>
 </body>
