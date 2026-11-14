@@ -173,6 +173,29 @@ fieldset.field { border: 0; margin: 0; padding: 0; }
 .pill.pendiente { background: var(--celeste-soft); }
 .pill.confirmada { background: var(--ok); color: #fff; border-color: var(--ok); }
 .pill.rechazada, .pill.cancelada { color: var(--muted); }
+.agenda { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.ag-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ag-head strong { font-size: 18px; text-transform: capitalize; }
+.ag-head button { min-width: 46px; min-height: 46px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 24px; font-weight: 800; cursor: pointer; }
+.ag-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.ag-dow { text-align: center; font-size: 12px; font-weight: 800; color: var(--muted); }
+.ag-day { min-height: 46px; border-radius: 10px; border: 2px solid transparent; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; padding: 0; }
+.ag-day.pasado { opacity: .5; }
+.ag-day.hoy { border-color: var(--azul); }
+.ag-day.viaje { background: var(--azul); color: var(--azul-ink); }
+.ag-day.sel { outline: 3px solid var(--dorado); outline-offset: 1px; }
+.ag-dots { display: flex; gap: 3px; height: 7px; }
+.ag-dots i, .ag-leyenda i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.ag-dots i.r, .ag-leyenda i.r { background: var(--ok); box-shadow: 0 0 0 1.5px #fff; }
+.ag-dots i.rp { border: 2px solid var(--ok); background: #fff; }
+.ag-dots i.p, .ag-leyenda i.p { background: var(--dorado); box-shadow: 0 0 0 1.5px #fff; }
+.ag-leyenda { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.ag-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.ag-leyenda i.v { width: 14px; height: 14px; border-radius: 4px; background: var(--azul); }
+.ag-dia { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.ag-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.ag-item > div { min-width: 0; }
+.mine.brillo { box-shadow: 0 0 0 3px var(--dorado); }
 .res { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 .res-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .note { background: var(--celeste-soft); border-radius: 12px; padding: 14px 16px; font-size: 15px; }
@@ -230,6 +253,16 @@ input.mini { margin-top: 8px; max-width: 180px; min-height: 46px; background: va
 .money { display: flex; align-items: center; gap: 8px; }
 .money span { font-size: 28px; font-weight: 900; }
 .money input { flex: 1; min-width: 0; }
+.money span.por-km { font-size: 17px; font-weight: 700; color: var(--muted); }
+.tarifa-box { display: flex; flex-direction: column; gap: 14px; background: var(--bg); border-radius: 14px; padding: 14px; }
+.tabla-tarifa { width: 100%; border-collapse: collapse; font-size: 16px; background: var(--surface); border-radius: 12px; overflow: hidden; }
+.pick span.pick-col { flex-direction: column; align-items: flex-start; gap: 4px; }
+.tabla-tarifa td { white-space: nowrap; }
+.tabla-tarifa th, .tabla-tarifa td { padding: 8px 8px; text-align: right; border-bottom: 1px solid var(--line); }
+.tabla-tarifa th:first-child, .tabla-tarifa td:first-child { text-align: left; }
+.tabla-tarifa th { font-size: 13px; color: var(--muted); font-weight: 800; }
+.tabla-tarifa tr.lleno td { font-weight: 900; color: var(--ok); }
+.baja { font-size: 14px; font-weight: 800; color: var(--ok); }
 .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 420px) { .cards { grid-template-columns: 1fr; } }
 .pick { position: relative; }
@@ -536,10 +569,24 @@ dl.resumen { margin: 0; }
         </div>
       </section>
       <section class="step" data-etapa="2">
-        <h2 class="q">¿Cuánto cobrás por caballo?</h2>
-        <p class="hint">En pesos, por el viaje completo de punta a punta. Para tramos más cortos la app calcula una estimación proporcional a los km.</p>
-        <div class="field"><label class="sr" for="v-precio">Precio por caballo</label><div class="money"><span aria-hidden="true" id="v-mon-sim">$</span><input id="v-precio" class="big" inputmode="numeric" placeholder="Ej: 250.000" autocomplete="off"></div></div>
-        <label class="choice" style="align-self:flex-start"><input type="checkbox" id="v-convenir"><span>A convenir</span></label>
+        <h2 class="q">¿Cómo cobrás?</h2>
+        <div class="cards" role="radiogroup" aria-label="Cómo cobrás">
+          <label class="pick"><input type="radio" name="v-modo" value="km" checked><span class="pick-col">🚛 Por km, repartido entre los caballos <small>Cuanto más se llena el tráiler, menos paga cada uno y más cobrás vos.</small></span></label>
+          <label class="pick"><input type="radio" name="v-modo" value="caballo"><span>🐴 Precio fijo por caballo</span></label>
+          <label class="pick"><input type="radio" name="v-modo" value="convenir"><span>🤝 A convenir</span></label>
+        </div>
+        <div class="tarifa-box" id="v-km-box">
+          <div class="field"><label for="v-viaje-total">¿Cuánto cobrás el viaje completo con el tráiler?</label><div class="money"><span aria-hidden="true">$</span><input id="v-viaje-total" class="big" inputmode="numeric" placeholder="Ej: 1.000.000" autocomplete="off"></div><span class="hint">Lo que le cobrarías a uno solo por todo el recorrido.</span></div>
+          <div class="field"><label for="v-precio-km">O, si preferís, por km</label><div class="money"><span aria-hidden="true">$</span><input id="v-precio-km" inputmode="numeric" placeholder="Ej: 2.200" autocomplete="off"><span class="por-km">el km</span></div><span class="hint" id="v-km-ayuda"></span></div>
+          <div class="field"><label for="v-minimo">Mínimo por caballo (opcional)</label><div class="money"><span aria-hidden="true">$</span><input id="v-minimo" inputmode="numeric" placeholder="Ej: 150.000" autocomplete="off"></div><span class="hint">Así, con el tráiler lleno cobrás más que con uno solo.</span></div>
+          <input type="hidden" id="v-km-fuente" value="total">
+          <div id="v-tabla"></div>
+        </div>
+        <div id="v-fijo-box" hidden>
+          <p class="hint">En pesos, por el viaje completo de punta a punta. Para tramos más cortos la app calcula una estimación proporcional a los km.</p>
+          <div class="field"><label for="v-precio">Precio por caballo</label><div class="money"><span aria-hidden="true" id="v-mon-sim">$</span><input id="v-precio" class="big" inputmode="numeric" placeholder="Ej: 250.000" autocomplete="off"></div></div>
+        </div>
+        <input type="checkbox" id="v-convenir" hidden>
         <fieldset class="field"><legend>¿Qué incluye?</legend>
           <div class="choices" id="v-incluye">
             <label class="choice"><input type="checkbox" value="Agua"><span>Agua</span></label>
@@ -648,6 +695,10 @@ dl.resumen { margin: 0; }
     <div id="cuenta-box"></div>
     <div id="avisos-mis"></div>
     <p class="status" id="s-mis" role="status"></p>
+    <div id="agenda-wrap" hidden>
+      <div class="section-title"><h2>Mi agenda</h2></div>
+      <div class="agenda" id="agenda"></div>
+    </div>
     <div class="section-title"><h2>Viajes que publiqué</h2></div>
     <div class="list" id="l-mis-viajes"></div>
     <div class="section-title"><h2>Lugares que pedí</h2></div>
@@ -751,7 +802,7 @@ dl.resumen { margin: 0; }
   <div class="wrap">
     <a href="#buscar" data-view="buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>Buscar</a>
     <a href="#publicar" data-view="publicar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Publicar</a>
-    <a href="#mis" data-view="mis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 16h2l1.5-5h10l2.5 5h4"/><path d="M5.5 11 8 6h7l3 5"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>Mis viajes</a>
+    <a href="#mis" data-view="mis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 14.5H4"/><rect x="4" y="7" width="18" height="9" rx="2.5"/><path d="M8 7V5.5M8 10.5h10"/><circle cx="11" cy="18.5" r="1.8"/><circle cx="16" cy="18.5" r="1.8"/></svg>Mis viajes</a>
     <a href="#mensajes" data-view="mensajes"><span class="ico-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg><span class="badge" data-badge hidden></span></span>Mensajes</a>
   </div>
 </nav>
@@ -775,7 +826,7 @@ dl.resumen { margin: 0; }
         <div class="field"><label for="r-nombre">Tu nombre</label><input id="r-nombre" class="big" required autocomplete="name" data-remember="nombre"></div>
         <div class="field"><label for="r-wa">Tu WhatsApp</label><input id="r-wa" class="big" type="tel" inputmode="tel" required data-remember="wa"><span class="hint">Lo ve el transportista solo cuando la reserva está confirmada.</span></div>
       </div>
-      <p class="note consulta-nota"><strong>Una consulta no reserva lugares.</strong> El transportista te responde por el chat con un presupuesto. La reserva se confirma cuando vos lo aceptás.</p>
+      <p class="note consulta-nota" id="r-nota"><strong>Una consulta no reserva lugares.</strong> El transportista te responde por el chat con un presupuesto. La reserva se confirma cuando vos lo aceptás.</p>
     </section>
     <div class="wz-nav">
       <button type="button" class="btn btn-ghost" data-back hidden>‹ Atrás</button>
@@ -921,7 +972,7 @@ dl.resumen { margin: 0; }
   const OSRM = "https://router.project-osrm.org/route/v1/driving/";
   const OVERPASS = "https://overpass-api.de/api/interpreter";
   const LEAFLET = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/";
-  const VCOLS = "id,owner,nombre,vehiculo,paradas,fecha,hora,total,libres,precio,nota,activo,creado,moneda,precio_caballo,precio_incluye,precio_extras,paradas_det,cerca,ruta_km,ruta_min,ruta_geo,ruta_pendiente,desvio_ok,desvio_km,desvio_min,cargas_propias,ocupacion,vuelta_de,cerrado";
+  const VCOLS = "id,owner,nombre,vehiculo,paradas,fecha,hora,total,libres,precio,nota,activo,creado,moneda,precio_caballo,precio_incluye,precio_extras,paradas_det,cerca,ruta_km,ruta_min,ruta_geo,ruta_pendiente,desvio_ok,desvio_km,desvio_min,cargas_propias,ocupacion,vuelta_de,cerrado,precio_km,minimo_caballo";
   const PCOLS = "id,owner,nombre,desde,hasta,fecha_desde,fecha_hasta,caballos,tipo,nota,activo,creado,desde_lat,desde_lng,hasta_lat,hasta_lng";
   const PARADA_KM = 8;      // a menos de esto, cargar en una parada confirmada no es desvío
   const PASA_KM = 6;        // a menos de esto del recorrido real, el viaje "pasa por" ese pueblo
@@ -1369,8 +1420,25 @@ dl.resumen { margin: 0; }
     }));
     if (cambio && vista === "buscar") pintarBuscar();
   }
+  // Tarifa por km: cada tramo cuesta km × tarifa y se reparte entre los caballos que van (igual que en la base)
+  const redondeo = x => Math.max(1000, Math.round(x / 1000) * 1000);
+  function precioTarifa(v, d, h, c, desvioKm, lleno) {
+    const n = v.paradas.length, st = paradasDe(v), occ = ocupDe(v); let parte = 0, kmt = 0;
+    for (let s = d; s < h; s++) {
+      const k0 = st[s] && st[s].km, k1 = st[s + 1] && st[s + 1].km;
+      const seg = k0 != null && k1 != null && k1 > k0 ? k1 - k0 : (v.ruta_km || 0) / Math.max(n - 1, 1);
+      const hh = lleno ? Math.max(v.total, c) : Math.max((occ[s] || 0) + c, c);
+      parte += seg * v.precio_km * c / hh; kmt += seg;
+    }
+    const piso = (v.minimo_caballo || 0) * c * (v.ruta_km > 0 ? Math.min(1, kmt / v.ruta_km) : 1);
+    return redondeo(Math.max(parte, piso) + (desvioKm || 0) * v.precio_km);
+  }
   // Precio por caballo para ese tramo
-  function precioTramo(v, m) {
+  function precioTramo(v, m, cab) {
+    if (v.precio_km != null && v.ruta_km) {
+      const c = cab || 1, tot = precioTarifa(v, m.d, m.h, c, m.nueva ? m.extra || 0 : 0);
+      return { cab: Math.round(tot / c), tot, tarifa: true, lleno: precioTarifa(v, m.d, m.h, 1, 0, true) };
+    }
     if (v.precio_caballo == null) return { convenir: true };
     if (m.completo) return { cab: +v.precio_caballo };
     const km = m.km != null ? m.km : kmTramo(v, m.d, m.h);
@@ -1380,7 +1448,10 @@ dl.resumen { margin: 0; }
     return { cab: x, prop: true, km };
   }
   function textoPrecio(v, m, cab) {
-    const p = precioTramo(v, m);
+    const p = precioTramo(v, m, cab);
+    if (p.tarifa) return { linea: fmtMon(p.cab, "ARS") + " por caballo hoy" + (cab > 1 ? " · Total " + fmtMon(p.tot, "ARS") : ""), cab: p.cab, tarifa: true,
+      baja: p.lleno < p.cab ? "📉 Baja hasta " + fmtMon(p.lleno, "ARS") + " por caballo si se llena" : "",
+      detalle: "Tarifa de " + fmtMon(Math.round(v.precio_km), "ARS") + " el km con el tráiler, repartida entre los caballos que viajan. Cuantos más se suman, menos paga cada uno." };
     if (p.convenir) return { linea: p.parcial ? "Precio del tramo: a convenir" : "Precio: a convenir", detalle: "" };
     return { linea: fmtMon(p.cab, v.moneda) + " por caballo" + (cab > 1 ? " · Total " + fmtMon(p.cab * cab, v.moneda) : ""),
       detalle: p.prop ? "Proporcional a " + fmtKm(p.km) + " de " + fmtKm(v.ruta_km) + " del viaje completo." : "", cab: p.cab };
@@ -1440,6 +1511,7 @@ dl.resumen { margin: 0; }
     body.append(el("div", "meta", busqueda ? plural(libres, "lugar libre para tu tramo", "lugares libres para tu tramo") : plural(libres, "lugar libre", "lugares libres") + (v.paradas.length > 2 ? " en todo el recorrido" : "")));
     const pr = textoPrecio(v, m || matchViaje(v, null), cab);
     body.append(el("div", "price", pr.linea));
+    if (pr.baja) body.append(el("div", "baja", pr.baja));
     const who = el("div", "who"); who.append(el("span", null, v.nombre + " · " + v.vehiculo));
     const ch = comprobaciones(v.owner); if (ch.length) who.append(el("span", "seal", "✓ " + ch[0])); else who.append(el("span", "newbie", "Sin comprobaciones todavía"));
     body.append(who);
@@ -1464,7 +1536,8 @@ dl.resumen { margin: 0; }
     acts.append(verD);
     if (v.owner === miId()) acts.append(el("span", "newbie", "Tu viaje"));
     else if (libres >= cab) {
-      const b = el("button", "btn btn-gold btn-sm", m && m.fuera ? "Pedirle que pase a buscarlo" : "Consultar disponibilidad"); b.type = "button";
+      const mm = m || matchViaje(v, null);
+      const b = el("button", "btn btn-gold btn-sm", mm.fuera ? "Pedirle que pase a buscarlo" : v.precio_km != null && v.ruta_km && !mm.nueva ? "Reservar" : "Consultar disponibilidad"); b.type = "button";
       b.addEventListener("click", () => abrirSolicitud(v, m)); acts.append(b);
     }
     foot.append(acts);
@@ -1600,13 +1673,22 @@ dl.resumen { margin: 0; }
     box.replaceChildren();
     if (m.h <= m.d) { box.append(el("strong", null, "Elegí un lugar de bajada después del de subida.")); return m; }
     $("r-cab").max = Math.max(1, m.libres);
-    const pr = textoPrecio(v, m, cab);
-    box.append(el("strong", null, (/^\$/.test(pr.linea) ? "Estimado: " : "") + pr.linea), el("span", null, m.libres > 0 ? plural(m.libres, "lugar libre en ese tramo", "lugares libres en ese tramo") : "No queda lugar en ese tramo"));
-    if (pr.detalle) box.append(el("span", "hint", pr.detalle));
-    box.append(el("span", "hint", "El precio final lo confirma el transportista en su presupuesto."));
+    const pr = textoPrecio(v, m, cab), inst = reservaAlInstante(v, m), pt = precioTramo(v, m, cab);
+    if (inst) {
+      box.append(el("strong", null, "Pagás como máximo: " + fmtMon(pt.tot, "ARS")), el("span", null, (cab > 1 ? fmtMon(pt.cab, "ARS") + " por caballo · " : "") + (m.libres > 0 ? plural(m.libres, "lugar libre en ese tramo", "lugares libres en ese tramo") : "No queda lugar en ese tramo")));
+      if (pt.lleno < pt.cab) box.append(el("span", "baja", "📉 Si se suman más caballos, baja solo (hasta " + fmtMon(pt.lleno * cab, "ARS") + " si se llena). Te avisamos."));
+      box.append(el("span", "hint", "Es la tarifa por km de " + v.nombre + ", repartida entre los caballos que viajan. El precio queda fijo el día anterior al viaje."));
+    } else {
+      box.append(el("strong", null, (/^\$/.test(pr.linea) ? "Estimado: " : "") + pr.linea), el("span", null, m.libres > 0 ? plural(m.libres, "lugar libre en ese tramo", "lugares libres en ese tramo") : "No queda lugar en ese tramo"));
+      if (pr.detalle) box.append(el("span", "hint", pr.detalle));
+      box.append(el("span", "hint", "El precio final lo confirma el transportista en su presupuesto."));
+    }
+    $("r-ok").textContent = inst ? "Reservar ahora" : "Consultar disponibilidad";
+    $("r-nota").replaceChildren(el("strong", null, inst ? "Reservás al instante." : "Una consulta no reserva lugares."),
+      document.createTextNode(inst ? " Con la tarifa del transportista no hace falta esperar su respuesta: coordinan la carga por el chat." : " El transportista te responde por el chat con un presupuesto. La reserva se confirma cuando vos lo aceptás."));
     if (!COBRO.activo) box.append(el("span", "hint", "Piloto gratuito: Combineta no cobra cargo. El transporte se lo pagás al transportista."));
     if (COBRO.activo) {
-      const pt = precioTramo(v, m), total = pt.cab != null ? pt.cab * cab : null, cg = cargoDe(total, v.moneda || "ARS");
+      const total = pt.tot != null ? pt.tot : pt.cab != null ? pt.cab * cab : null, cg = cargoDe(total, v.moneda || "ARS");
       box.append(el("span", "cargo-linea", "+ Cargo de Combineta: " + fmtMon(cg, "ARS") + (total != null && (v.moneda || "ARS") === "ARS" && cg > COBRO.minimo ? " (" + String(COBRO.porcentaje).replace(".", ",") + "%)" : "")),
         el("span", "hint", "El cargo lo pagás por la app recién cuando el transportista confirme tu lugar." + (total != null ? " El viaje (" + fmtMon(total, v.moneda || "ARS") + ") se lo pagás a él como acuerden." : " El precio del viaje lo arreglás con él.")));
     }
@@ -1616,6 +1698,8 @@ dl.resumen { margin: 0; }
       : m.nueva ? "El viaje pasa por ahí, pero no es una de sus paradas. El transportista te confirma el lugar exacto para cargar." : "";
     return m;
   }
+  // Con tarifa por km y sin desvío, se reserva al instante (el precio lo calcula la app)
+  const reservaAlInstante = (v, m) => v.precio_km != null && !!v.ruta_km && !m.nueva;
   ["r-d", "r-h"].forEach(id => $(id).addEventListener("change", actualizarTramo));
   $("r-cab").addEventListener("input", actualizarTramo);
   function abrirSolicitud(v, m) {
@@ -1647,7 +1731,7 @@ dl.resumen { margin: 0; }
     const cuenta = await pedirCuenta("Para consultar, entrá con tu celular. Así ves tus consultas y el chat desde cualquier teléfono.");
     if (!cuenta) return;
     if (!(await condiciones())) return;
-    const pr = precioTramo(v, m);
+    const pr = precioTramo(v, m, n), inst = reservaAlInstante(v, m);
     const fila = { viaje_id: v.id, nombre: $("r-nombre").value.trim(), whatsapp: wa, caballos: n,
       carga_en: m.desdeN, baja_en: m.hastaN, desde_idx: m.d, hasta_idx: m.h, km_tramo: m.km != null ? Math.round(m.km) : null,
       precio_estimado: pr.cab != null ? pr.cab : null, moneda: "ARS", desvio: m.nueva, desvio_km: m.nueva ? Math.round(m.extra) : null };
@@ -1657,6 +1741,17 @@ dl.resumen { margin: 0; }
       const nueva = await api("POST", "reservas?select=*", fila, { auth: true });
       const r = nueva && nueva[0];
       if (!r) throw new Error("No pudimos enviar la consulta. Probá de nuevo.");
+      if (inst && r.presupuesto_total) {
+        dlg.close();
+        if (r.presupuesto_total > pr.tot) { location.hash = "#mis"; toast("El precio cambió mientras reservabas: revisalo y confirmalo en Mis viajes."); return; }
+        try {
+          await api("POST", "rpc/aceptar_presupuesto", { reserva: r.id, total: r.presupuesto_total }, { auth: true });
+        } catch (ex) { location.hash = "#mis"; toast(ex.message); refrescarTodo(); return; }
+        abrirChat(Object.assign({}, r, { estado: "confirmada", presupuesto_aceptado: r.presupuesto_total }), v, v.nombre);
+        toast("¡Reserva confirmada! Pagás como máximo " + fmtMon(r.presupuesto_total, "ARS") + ". Coordiná la carga con " + v.nombre + " por el chat.");
+        refrescarTodo();
+        return;
+      }
       const msg = "Hola " + v.nombre + ", ¿tenés lugar para " + plural(n, "caballo", "caballos") + " de " + m.desdeN + " a " + m.hastaN +
         " en tu viaje del " + fcorta(v.fecha) + "?" + (m.nueva ? " Habría que " + (m.desvio ? "desviarse ≈ " + fmtKm(m.extra) + " para buscarlo." : "parar en " + (m.a.tipo !== "parada" ? m.desdeN : m.hastaN) + ".") : "") +
         (pr.cab != null ? " La app estima " + fmtMon(pr.cab * n, "ARS") + " en total." : "") + " Pasame un presupuesto. Soy " + fila.nombre + ".";
@@ -1667,7 +1762,7 @@ dl.resumen { margin: 0; }
       if (!primero) $("ch-txt").value = msg;
       toast("Consulta enviada a " + v.nombre + ". Te va a responder con un presupuesto. Todavía no reserva lugar.");
     } catch (ex) { mostrarError(err, ex.message); }
-    finally { btn.disabled = false; btn.textContent = "Consultar disponibilidad"; }
+    finally { btn.disabled = false; btn.textContent = inst ? "Reservar ahora" : "Consultar disponibilidad"; }
   });
 
   // ================= Datos de carga y descarga (coordinación) =================
@@ -1871,7 +1966,8 @@ dl.resumen { margin: 0; }
     "p-desde": x => getLoc(x) ? null : "Escribí la localidad.", "p-hasta": x => getLoc(x) ? null : "Escribí la localidad.",
     "v-fecha": x => x.value && x.value < hoyISO() ? "Esa fecha ya pasó." : null,
     "v-total": x => !(+x.value >= 1 && +x.value <= 40) ? "Entre 1 y 40 caballos." : (maxOcupacion() > +x.value ? "Con los caballos que ya llevás no entra: revisalos." : null),
-    "v-precio": x => $("v-convenir").checked || numPrecio() > 0 ? null : "Poné el precio por caballo o marcá \"A convenir\".",
+    "v-precio-km": () => modoCobro() !== "km" ? null : !kmVJ() ? "No pudimos calcular los km del recorrido. Elegí \"Precio fijo por caballo\"." : precioKmVJ() > 0 ? null : "Poné cuánto cobrás el viaje completo o el km.",
+    "v-precio": () => modoCobro() !== "caballo" || numPrecio() > 0 ? null : "Poné el precio por caballo.",
     "v-wa": waCheck, "p-wa": waCheck, "r-wa": waCheck, "r-c-tel": telCheck, "r-b-tel": telCheck,
     "p-cab": x => !(+x.value >= 1 && +x.value <= 40) ? "Entre 1 y 40 caballos." : null,
     "r-cab": x => { const m = tramoElegido(); return m.h <= m.d ? "Elegí dónde bajan, después de donde suben." : !(+x.value >= 1 && +x.value <= m.libres) ? (m.libres ? "En ese tramo entran hasta " + plural(m.libres, "caballo", "caballos") + "." : "No queda lugar en ese tramo.") : null; },
@@ -2127,6 +2223,44 @@ dl.resumen { margin: 0; }
   $("v-precio").addEventListener("input", () => { const x = $("v-precio"), dig = x.value.replace(/\D/g, ""); x.value = dig ? fmtNum(+dig) : ""; if (dig) $("v-convenir").checked = false; guardarBorrador(); });
   $("v-convenir").addEventListener("change", () => { if ($("v-convenir").checked) $("v-precio").value = ""; guardarBorrador(); });
   const numPrecio = () => +($("v-precio").value.replace(/\D/g, "")) || 0;
+  const numDe = id => +($(id).value.replace(/\D/g, "")) || 0;
+  const modoCobro = () => radioVal("v-modo") || "km";
+  const kmVJ = () => VJ.km ? Math.round(VJ.km) : null;  // los km que se guardan en el viaje
+  function precioKmVJ() {
+    if ($("v-km-fuente").value === "total" && kmVJ() && numDe("v-viaje-total")) return numDe("v-viaje-total") / kmVJ();
+    return numDe("v-precio-km");
+  }
+  const porCaballoLleno = (pkm, km, tot, min) => redondeo(Math.max(pkm * km / Math.max(tot, 1), min || 0));
+  function pintarModo() {
+    const mo = modoCobro();
+    $("v-km-box").hidden = mo !== "km"; $("v-fijo-box").hidden = mo !== "caballo"; $("v-convenir").checked = mo === "convenir";
+    if (mo === "km") pintarTarifa();
+  }
+  function pintarTarifa() {
+    const pkm = precioKmVJ(), km = kmVJ(), tot = parseInt($("v-total").value, 10) || 1, min = numDe("v-minimo"), t = $("v-tabla");
+    $("v-viaje-total").disabled = !km;
+    $("v-km-ayuda").textContent = !km ? "No pudimos calcular los km del recorrido: poné el precio por km." : "Tu recorrido tiene " + fmtKm(km) + (pkm ? ": el viaje completo sale " + fmtMon(redondeo(pkm * km), "ARS") + "." : ".");
+    t.replaceChildren();
+    if (!pkm || !km) return;
+    const ns = []; for (let n = 1; n <= tot; n++) if (tot <= 10 || n <= 4 || n === tot || n % 2 === 0) ns.push(n);
+    const tb = el("table", "tabla-tarifa"), hd = el("tr");
+    ["Caballos en el tráiler", "Paga cada uno", "Cobrás vos"].forEach(x => hd.append(el("th", null, x))); tb.append(hd);
+    ns.forEach(n => { const c = redondeo(Math.max(pkm * km / n, min)), tr = el("tr", n === tot ? "lleno" : null);
+      tr.append(el("td", null, n === tot ? n + " (lleno)" : String(n)), el("td", null, fmtMon(c, "ARS")), el("td", null, fmtMon(c * n, "ARS"))); tb.append(tr); });
+    t.append(el("strong", null, "Así se reparte (viaje completo)"), tb,
+      el("p", "hint", "Cuentan todos los caballos que van en el tráiler, también los que ya llevás. Para tramos más cortos se calcula por los km de cada uno. Los dueños reservan al instante con este precio y, si se suman más caballos, a todos les baja."));
+  }
+  document.querySelectorAll('input[name="v-modo"]').forEach(r => r.addEventListener("change", () => { pintarModo(); guardarBorrador(); }));
+  $("v-viaje-total").addEventListener("input", () => {
+    const x = $("v-viaje-total"), dig = x.value.replace(/\D/g, ""); x.value = dig ? fmtNum(+dig) : "";
+    $("v-km-fuente").value = "total"; $("v-precio-km").value = dig && kmVJ() ? fmtNum(Math.round(+dig / kmVJ())) : ""; pintarTarifa();
+  });
+  $("v-precio-km").addEventListener("input", () => {
+    const x = $("v-precio-km"), dig = x.value.replace(/\D/g, ""); x.value = dig ? fmtNum(+dig) : "";
+    $("v-km-fuente").value = "km"; $("v-viaje-total").value = dig && kmVJ() ? fmtNum(redondeo(+dig * kmVJ())) : ""; pintarTarifa();
+  });
+  $("v-minimo").addEventListener("input", () => { const x = $("v-minimo"), dig = x.value.replace(/\D/g, ""); x.value = dig ? fmtNum(+dig) : ""; pintarTarifa(); });
+  $("v-total").addEventListener("input", () => { if (modoCobro() === "km") pintarTarifa(); });
   document.querySelectorAll('input[name="v-desvio"]').forEach(r => r.addEventListener("change", () => { $("v-desvio-op").hidden = !document.querySelector('input[name="v-desvio"][value="si"]').checked; guardarBorrador(); }));
   const vehiculoElegido = () => (document.querySelector('input[name="v-veh"]:checked') || {}).value || "Trailer";
   const radioVal = name => (document.querySelector('input[name="' + name + '"]:checked') || {}).value;
@@ -2135,7 +2269,8 @@ dl.resumen { margin: 0; }
     const ps = paradasVJ(), tot = VJ.geo ? largo(VJ.geo) : 0, wa = normWA($("v-wa").value);
     const det = ps.map(p => ({ n: p.n, p: p.p || "", lat: p.lat, lng: p.lng, km: VJ.geo && VJ.km && p.lat != null ? Math.round(proyectar(VJ.geo, [p.lat, p.lng]).avance / tot * VJ.km) : null }));
     if (det.length) det[0].km = 0;
-    const precio = $("v-convenir").checked ? null : numPrecio() || null;
+    const modo = modoCobro(), pkm = modo === "km" && kmVJ() ? precioKmVJ() || null : null, minimo = pkm ? numDe("v-minimo") || null : null;
+    const precio = modo === "caballo" ? numPrecio() || null : pkm ? porCaballoLleno(pkm, kmVJ(), parseInt($("v-total").value, 10), minimo) : null;
     const incl = Array.from(document.querySelectorAll("#v-incluye input:checked")).map(x => x.value).join(", ");
     const desv = radioVal("v-desvio") === "si";
     return {
@@ -2145,7 +2280,8 @@ dl.resumen { margin: 0; }
       ruta_km: VJ.km ? Math.round(VJ.km) : null, ruta_min: VJ.min ? Math.round(VJ.min) : null, ruta_geo: VJ.pendiente ? null : VJ.geo, ruta_pendiente: VJ.pendiente,
       fecha: $("v-fecha").value, hora: $("v-hora").value || null,
       total: parseInt($("v-total").value, 10), libres: parseInt($("v-total").value, 10) - maxOcupacion(), cargas_propias: VJ.cargas,
-      moneda: "ARS", precio_caballo: precio, precio: precio ? fmtMon(precio, "ARS") : null,
+      moneda: "ARS", precio_caballo: precio, precio: precio ? (pkm ? "desde " : "") + fmtMon(precio, "ARS") : null,
+      precio_km: pkm ? Math.round(pkm * 100) / 100 : null, minimo_caballo: minimo,
       precio_incluye: incl || null, precio_extras: $("v-extras").value.trim() || null,
       desvio_ok: desv, desvio_km: desv ? +radioVal("v-desvio-km") || 20 : 0, desvio_min: desv && radioVal("v-desvio-min") ? +radioVal("v-desvio-min") : null,
       nota: $("v-nota").value.trim() || null, vuelta_de: VJ.vuelta_de || null
@@ -2159,7 +2295,8 @@ dl.resumen { margin: 0; }
       ["Día", fcorta(f.fecha) + (f.hora ? " · " + f.hora + " h" : "")],
       ["Capacidad", plural(f.total, "caballo", "caballos") + (VJ.cargas.length ? " · ya llevás " + VJ.cargas.reduce((a, c) => a + c.c, 0) : "")],
       ["Vehículo", f.vehiculo],
-      ["Precio por caballo", f.precio_caballo ? fmtMon(f.precio_caballo, f.moneda) + " (viaje completo)" : "A convenir"],
+      f.precio_km ? ["Tarifa", fmtMon(Math.round(f.precio_km), "ARS") + " el km · viaje completo " + fmtMon(redondeo(f.precio_km * f.ruta_km), "ARS") + (f.minimo_caballo ? " · mínimo " + fmtMon(f.minimo_caballo, "ARS") + " por caballo" : "") + ". Con el tráiler lleno: " + fmtMon(f.precio_caballo, "ARS") + " por caballo"]
+        : ["Precio por caballo", f.precio_caballo ? fmtMon(f.precio_caballo, f.moneda) + " (viaje completo)" : "A convenir"],
       ["Incluye", f.precio_incluye || "—"],
       ["Desvíos", f.desvio_ok ? "Hasta " + f.desvio_km + " km" + (f.desvio_min ? " / " + f.desvio_min + " min" : "") + ", con tu aprobación" : "No"],
       ["A nombre de", f.nombre], ["WhatsApp", $("v-wa").value.trim()]
@@ -2181,6 +2318,7 @@ dl.resumen { margin: 0; }
         if (clave !== VJ.clave) { VJ.clave = clave; recalcularRuta(VJ.inter.length === 0); } else pintarRuta();
       }
       if (s.querySelector("#v-cargas")) { ajustarCargas(); pintarCargas(); }
+      if (s.querySelector("#v-precio-km")) pintarModo();
       if (s.hasAttribute("data-resumen")) pintarResumen();
       guardarBorrador();
     }
@@ -2191,8 +2329,8 @@ dl.resumen { margin: 0; }
     if (VJ.modo === "editar") return;
     clearTimeout(borradorT);
     const guardar = () => {
-      const campos = {}; ["v-fecha", "v-hora", "v-total", "v-precio", "v-extras", "v-nombre", "v-wa", "v-nota"].forEach(id => { campos[id] = $(id).value; });
-      const radios = {}; ["v-veh", "v-desvio", "v-desvio-km", "v-desvio-min"].forEach(n => { radios[n] = radioVal(n); });
+      const campos = {}; ["v-fecha", "v-hora", "v-total", "v-precio", "v-viaje-total", "v-precio-km", "v-minimo", "v-km-fuente", "v-extras", "v-nombre", "v-wa", "v-nota"].forEach(id => { campos[id] = $(id).value; });
+      const radios = {}; ["v-veh", "v-desvio", "v-desvio-km", "v-desvio-min", "v-modo"].forEach(n => { radios[n] = radioVal(n); });
       const incl = Array.from(document.querySelectorAll("#v-incluye input:checked")).map(x => x.value);
       store.set("borrador-viaje", JSON.stringify({ t: Date.now(), o: getLoc($("v-desde")), d: getLoc($("v-hasta")), campos, radios, incl, convenir: $("v-convenir").checked,
         vj: { inter: VJ.inter, cargas: VJ.cargas, moneda: VJ.moneda, vuelta_de: VJ.vuelta_de, modo: VJ.modo }, paso: $("f-viaje")._wz.paso() }));
@@ -2208,7 +2346,8 @@ dl.resumen { margin: 0; }
     Object.keys(b.campos || {}).forEach(id => { if ($(id)) $(id).value = b.campos[id] || ""; });
     Object.keys(b.radios || {}).forEach(n => { const r = document.querySelector('input[name="' + n + '"][value="' + (b.radios[n] || "") + '"]'); if (r) r.checked = true; });
     document.querySelectorAll("#v-incluye input").forEach(x => { x.checked = (b.incl || []).includes(x.value); });
-    $("v-convenir").checked = !!b.convenir;
+    if (!(b.radios && b.radios["v-modo"])) { const mo = b.convenir ? "convenir" : b.campos && b.campos["v-precio"] ? "caballo" : "km"; document.querySelector('input[name="v-modo"][value="' + mo + '"]').checked = true; }
+    pintarModo();
     VJ.inter = (b.vj && b.vj.inter) || []; VJ.cargas = (b.vj && b.vj.cargas) || []; VJ.moneda = "ARS"; VJ.vuelta_de = (b.vj && b.vj.vuelta_de) || null;
     $("v-desvio-op").hidden = radioVal("v-desvio") !== "si"; pintarMoneda();
   }
@@ -2224,7 +2363,7 @@ dl.resumen { margin: 0; }
     VJ = vjNuevo(); store.del("borrador-viaje"); $("v-borrador").hidden = true; $("v-desvio-op").hidden = true; pintarMoneda();
     f._wz.steps.forEach(s => s.removeAttribute("data-saltar"));
     f.querySelector("[data-submit]").textContent = "Publicar mi viaje";
-    recordar(f); $("v-total").value = 6; f._wz.go(0, false);
+    recordar(f); $("v-total").value = 6; $("v-km-fuente").value = "total"; pintarModo(); f._wz.go(0, false);
   }
   $("v-borrar").addEventListener("click", reiniciarViaje);
 
@@ -2277,7 +2416,13 @@ dl.resumen { margin: 0; }
     setLoc($("v-desde"), modo === "vuelta" ? d : o); setLoc($("v-hasta"), modo === "vuelta" ? o : d);
     VJ.inter = (modo === "vuelta" ? st.slice(1, -1).reverse() : st.slice(1, -1)).map(s => ({ n: s.n, p: s.p, lat: s.lat, lng: s.lng }));
     $("v-total").value = v.total; VJ.moneda = "ARS"; pintarMoneda();
-    if (v.precio_caballo != null) $("v-precio").value = fmtNum(v.precio_caballo); else $("v-convenir").checked = true;
+    const mo = v.precio_km != null ? "km" : v.precio_caballo != null ? "caballo" : "convenir";
+    document.querySelector('input[name="v-modo"][value="' + mo + '"]').checked = true;
+    if (mo === "km") {
+      $("v-precio-km").value = fmtNum(Math.round(v.precio_km)); $("v-minimo").value = v.minimo_caballo ? fmtNum(v.minimo_caballo) : "";
+      if (v.ruta_km) { $("v-viaje-total").value = fmtNum(redondeo(v.precio_km * v.ruta_km)); $("v-km-fuente").value = "total"; } else $("v-km-fuente").value = "km";
+    } else if (mo === "caballo") $("v-precio").value = fmtNum(v.precio_caballo);
+    pintarModo();
     const r = document.querySelector('input[name="v-veh"][value="' + v.vehiculo + '"]'); if (r) r.checked = true;
     (v.precio_incluye || "").split(",").map(s => s.trim()).forEach(x => { const c = document.querySelector('#v-incluye input[value="' + x + '"]'); if (c) c.checked = true; });
     $("v-extras").value = v.precio_extras || ""; $("v-nombre").value = v.nombre; $("v-nota").value = v.nota || "";
@@ -2359,11 +2504,11 @@ dl.resumen { margin: 0; }
   const ESTADOS = { pendiente: "Consulta enviada", confirmada: "Reserva confirmada", rechazada: "Sin lugar", cancelada: "Cancelado por el dueño", anulada: "Cancelado por el transportista" };
   // Estado claro para la gente: Consulta enviada → En coordinación → Presupuesto aceptado → Reserva confirmada → Realizado / Cancelado
   function estadoDe(r, v) {
-    if (r.estado === "pendiente") return r.presupuesto_total ? { t: "En coordinación: presupuesto enviado", c: "pendiente" } : { t: "Consulta enviada", c: "pendiente" };
+    if (r.estado === "pendiente") return r.tarifa && r.presupuesto_total ? { t: "Precio listo: falta reservar", c: "pendiente" } : r.presupuesto_total ? { t: "En coordinación: presupuesto enviado", c: "pendiente" } : { t: "Consulta enviada", c: "pendiente" };
     if (r.estado === "confirmada") {
       if (r.pago_estado === "falta") return { t: "Presupuesto aceptado: falta el pago", c: "pendiente" };
       if (v && v.fecha && v.fecha < hoyISO()) return { t: "Realizado", c: "confirmada" };
-      if (r.presupuesto_total && r.presupuesto_aceptado && r.presupuesto_total !== r.presupuesto_aceptado) return { t: "Reserva confirmada · cambio de presupuesto", c: "confirmada" };
+      if (!r.tarifa && r.presupuesto_total && r.presupuesto_aceptado && r.presupuesto_total !== r.presupuesto_aceptado) return { t: "Reserva confirmada · cambio de presupuesto", c: "confirmada" };
       return { t: "Reserva confirmada", c: "confirmada" };
     }
     return { t: ESTADOS[r.estado] || r.estado, c: r.estado };
@@ -2385,6 +2530,7 @@ dl.resumen { margin: 0; }
     pintarCuenta();
     const s = $("s-mis"), lv = $("l-mis-viajes"), lr = $("l-mis-res"), lp = $("l-mis-ped");
     lv.replaceChildren(); lr.replaceChildren(); lp.replaceChildren();
+    $("agenda-wrap").hidden = !miId();
     if (!miId()) { s.textContent = ""; [lv, lr, lp].forEach(l => l.append(el("p", "status", "Nada por ahora."))); return; }
     s.textContent = "Cargando…"; s.classList.remove("err");
     try {
@@ -2404,7 +2550,77 @@ dl.resumen { margin: 0; }
       s.textContent = "";
       pintarAvisos($("avisos-mis"));
       pintarMisViajes(mv || [], rs || []); pintarMisReservas(mr || []); pintarMisPedidos(mp || []);
+      pintarAgenda(mv || [], rs || [], mr || []);
     } catch (e) { s.textContent = "No pudimos cargar tus viajes. " + e.message; s.classList.add("err"); }
+  }
+  // ================= Mi agenda: calendario de viajes y reservas =================
+  const MESES_L = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  const AG = { mes: null, sel: null, items: {} };
+  function pintarAgenda(viajes, reservas, mias) {
+    AG.items = {};
+    const add = (f, it) => { if (f) (AG.items[f] = AG.items[f] || []).push(it); };
+    viajes.forEach(v => {
+      if (v.cerrado) return;
+      const st = paradasDe(v), rs = reservas.filter(r => r.viaje_id === v.id);
+      const pend = rs.filter(r => r.estado === "pendiente").length, cab = rs.filter(r => r.estado === "confirmada").reduce((a, r) => a + (+r.caballos || 0), 0);
+      add(v.fecha, { tipo: "viaje", id: "mv-" + v.id, pend: pend > 0, titulo: "🚛 " + st[0].n + " → " + st[st.length - 1].n,
+        sub: (v.hora ? v.hora.slice(0, 5) + " · " : "") + (cab ? plural(cab, "caballo reservado", "caballos reservados") : "sin reservas todavía") + (pend ? " · " + plural(pend, "consulta", "consultas") : "") + (v.activo ? "" : " · pausado") });
+    });
+    mias.forEach(r => {
+      const v = r.viajes; if (!v || !v.paradas || !(r.estado === "pendiente" || r.estado === "confirmada")) return;
+      add(v.fecha, { tipo: "reserva", id: "mr-" + r.id, conf: r.estado === "confirmada", titulo: "🐴 " + tramoTexto(v, r),
+        sub: (r.estado === "confirmada" ? "Reserva confirmada" : "Consulta enviada") + " · " + (v.nombre || "transportista") });
+    });
+    if (!AG.mes) { const prox = Object.keys(AG.items).filter(f => f >= hoyISO()).sort()[0]; AG.mes = (prox || hoyISO()).slice(0, 7); }
+    dibujarAgenda();
+  }
+  function dibujarAgenda() {
+    const box = $("agenda"), [y, m] = AG.mes.split("-").map(Number), hoy = hoyISO();
+    const mover = n => { const d = new Date(y, m - 1 + n, 1); AG.mes = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); AG.sel = null; dibujarAgenda(); };
+    const head = el("div", "ag-head"), prev = el("button", null, "‹"), next = el("button", null, "›");
+    prev.type = next.type = "button"; prev.setAttribute("aria-label", "Mes anterior"); next.setAttribute("aria-label", "Mes siguiente");
+    prev.addEventListener("click", () => mover(-1)); next.addEventListener("click", () => mover(1));
+    head.append(prev, el("strong", null, MESES_L[m - 1] + " " + y), next);
+    const grid = el("div", "ag-grid");
+    ["L", "M", "M", "J", "V", "S", "D"].forEach(d => grid.append(el("span", "ag-dow", d)));
+    const off = (new Date(y, m - 1, 1).getDay() + 6) % 7, dias = new Date(y, m, 0).getDate();
+    for (let i = 0; i < off; i++) grid.append(el("span"));
+    for (let d = 1; d <= dias; d++) {
+      const iso = AG.mes + "-" + String(d).padStart(2, "0"), its = AG.items[iso] || [];
+      const b = el("button", "ag-day"); b.type = "button";
+      if (iso < hoy) b.classList.add("pasado"); if (iso === hoy) b.classList.add("hoy");
+      if (its.some(i => i.tipo === "viaje")) b.classList.add("viaje"); if (AG.sel === iso) b.classList.add("sel");
+      const dots = el("span", "ag-dots");
+      its.forEach(i => { if (i.tipo === "reserva") dots.append(el("i", i.conf ? "r" : "rp")); else if (i.pend) dots.append(el("i", "p")); });
+      b.append(el("span", null, String(d)), dots);
+      b.setAttribute("aria-pressed", String(AG.sel === iso));
+      b.setAttribute("aria-label", fcorta(iso) + (its.length ? ": " + its.map(i => i.titulo.replace(/^\S+ /, "")).join(", ") : ""));
+      b.addEventListener("click", () => { AG.sel = AG.sel === iso ? null : iso; dibujarAgenda(); });
+      grid.append(b);
+    }
+    const ley = el("div", "ag-leyenda");
+    [["v", "Mis viajes"], ["p", "Con consultas"], ["r", "Viajan mis caballos"]].forEach(([c, t]) => { const s = el("span"); s.append(el("i", c), document.createTextNode(t)); ley.append(s); });
+    box.replaceChildren(head, grid, ley, AG.sel ? panelDia(AG.sel) : el("p", "hint", "Tocá un día para ver qué tenés o para cargar un viaje nuevo."));
+  }
+  function panelDia(iso) {
+    const p = el("div", "ag-dia"), its = AG.items[iso] || [];
+    p.append(el("strong", null, fcorta(iso)));
+    if (!its.length) p.append(el("span", "hint", "No tenés nada este día."));
+    its.forEach(i => {
+      const row = el("div", "ag-item"), t = el("div"), b = el("button", "btn btn-ghost btn-sm", "Ver"); b.type = "button";
+      t.append(el("div", "route", i.titulo), el("div", "meta", i.sub));
+      b.addEventListener("click", () => { const n = $(i.id); if (!n) return; n.scrollIntoView({ behavior: "smooth", block: "start" }); n.classList.add("brillo"); setTimeout(() => n.classList.remove("brillo"), 1800); });
+      row.append(t, b); p.append(row);
+    });
+    if (iso >= hoyISO()) { const pub = el("button", "btn btn-primary", "+ Cargar un viaje este día"); pub.type = "button"; pub.addEventListener("click", () => publicarEnFecha(iso)); p.append(pub); }
+    return p;
+  }
+  function publicarEnFecha(iso) {
+    irA("publicar");
+    setTimeout(() => {
+      setSeg("viaje"); $("v-fecha").value = iso; botonesFecha(); guardarBorrador();
+      toast("Día elegido: " + fcorta(iso) + ". Ahora cargá de dónde salís y a dónde vas.");
+    }, 60);
   }
   function tramoTexto(v, r) {
     const st = paradasDe(v), n = st.length, d = r.desde_idx != null ? r.desde_idx : 0, h = r.hasta_idx != null ? r.hasta_idx : n - 1;
@@ -2414,7 +2630,7 @@ dl.resumen { margin: 0; }
     const l = $("l-mis-viajes");
     if (!viajes.length) { l.append(el("p", "status", "No publicaste viajes.")); return; }
     viajes.forEach(v => {
-      const st = paradasDe(v), n = st.length, box = el("div", "mine");
+      const st = paradasDe(v), n = st.length, box = el("div", "mine"); box.id = "mv-" + v.id;
       const head = el("div", "mine-head"), t = el("div");
       t.append(el("div", "route", st[0].n + " → " + st[n - 1].n), el("div", "meta", fcorta(v.fecha) + (v.hora ? " · " + v.hora.slice(0, 5) : "") + (v.ruta_km ? " · " + fmtKm(v.ruta_km) : v.ruta_pendiente ? " · ruta pendiente de calcular" : "")));
       const estado = v.cerrado ? "Cerrado" : !v.activo ? "Pausado" : v.fecha < hoyISO() ? "Ya salió" : "Publicado";
@@ -2426,6 +2642,10 @@ dl.resumen { margin: 0; }
       pend.forEach(r => box.append(filaSolicitud(v, r)));
       if (conf.length) box.append(el("strong", null, "Reservas confirmadas"));
       conf.forEach(r => box.append(filaSolicitud(v, r)));
+      if (v.precio_km != null && conf.length) {
+        const suma = conf.reduce((a, r) => a + (+(r.precio_actual || r.presupuesto_aceptado) || 0), 0);
+        if (suma) box.append(el("span", "pago-ok", "💰 Con lo reservado hoy cobrás " + fmtMon(suma, "ARS") + ". Cada caballo que se suma baja lo que paga cada uno y te suma a vos."));
+      }
       if (!pend.length && !conf.length) box.append(el("p", "hint", "Todavía nadie consultó."));
       const acts = el("div", "res-actions");
       let rutaBox = null;
@@ -2456,7 +2676,9 @@ dl.resumen { margin: 0; }
     const acts = el("div", "res-actions");
     acts.append(botonChat(r, v, r.nombre));
     const activa = r.estado === "pendiente" || r.estado === "confirmada";
-    if (r.estado === "confirmada" && r.presupuesto_aceptado) rr.append(el("span", "pago-ok", "✓ Total acordado: " + fmtMon(r.presupuesto_aceptado, "ARS") + " (te lo paga " + r.nombre.split(" ")[0] + ")."));
+    if (r.estado === "confirmada" && r.presupuesto_aceptado) rr.append(el("span", "pago-ok", r.tarifa && r.precio_actual && r.precio_actual < r.presupuesto_aceptado
+      ? "✓ Hoy paga " + fmtMon(r.precio_actual, "ARS") + " (bajó porque se sumaron caballos; su máximo era " + fmtMon(r.presupuesto_aceptado, "ARS") + "). Te lo paga " + r.nombre.split(" ")[0] + "."
+      : "✓ Total acordado: " + fmtMon(r.presupuesto_aceptado, "ARS") + (r.tarifa ? " con tu tarifa" : "") + " (te lo paga " + r.nombre.split(" ")[0] + ")."));
     if (presupuestoPendiente(r)) rr.append(el("span", "hint", "📋 Presupuesto enviado: " + fmtMon(r.presupuesto_total, "ARS") + ". Falta que " + r.nombre.split(" ")[0] + " lo acepte."));
     if (r.estado === "confirmada" && r.pago_estado === "falta") rr.append(el("span", "hint", "⏳ Falta que " + r.nombre.split(" ")[0] + " pague el cargo de Combineta (" + fmtMon(r.cargo, "ARS") + "). Cuando pague, te avisamos y te aparece su WhatsApp."));
     if (r.estado === "confirmada" && r.pago_estado === "pagado") rr.append(el("span", "pago-ok", "✓ Pagó el cargo de Combineta: reserva confirmada."));
@@ -2494,13 +2716,14 @@ dl.resumen { margin: 0; }
     const lab = el("label", null, r.estado === "confirmada" ? "Nuevo total del transporte (en pesos)" : "Tu presupuesto: total del transporte (en pesos)"); lab.htmlFor = id;
     const wrap = el("div", "money"), sim = el("span", null, "$"); sim.setAttribute("aria-hidden", "true");
     const inp = el("input"); inp.id = id; inp.inputMode = "numeric"; inp.className = "big"; inp.autocomplete = "off";
-    inp.value = r.presupuesto_total ? fmtNum(r.presupuesto_total) : (est ? fmtNum(est) : "");
+    const hoyT = r.estado === "confirmada" && r.tarifa ? +(r.precio_actual || r.presupuesto_aceptado) : null;
+    inp.value = hoyT ? fmtNum(hoyT) : r.presupuesto_total ? fmtNum(r.presupuesto_total) : (est ? fmtNum(est) : "");
     inp.placeholder = "Ej: 200.000";
     inp.addEventListener("input", () => { const n = parseInt(inp.value.replace(/\D/g, ""), 10); inp.value = n ? fmtNum(n) : ""; });
     wrap.append(sim, inp);
     const det = el("textarea"); det.maxLength = 300; det.placeholder = "Qué incluye o qué se suma (opcional). Ej: incluye peajes; desvío $ 20.000";
     det.setAttribute("aria-label", "Detalle del presupuesto"); det.value = r.presupuesto_detalle || "";
-    const ayuda = el("span", "hint", est ? "La app estimó " + fmtMon(est, "ARS") + " proporcional a los km. Es solo una sugerencia: poné tu precio, sumá el desvío o un mínimo por carga." : "El viaje está \"a convenir\": poné el total que cobrás por este tramo.");
+    const ayuda = el("span", "hint", hoyT ? "Con tu tarifa hoy paga " + fmtMon(hoyT, "ARS") + " y baja solo si se suman caballos. Si le ponés otro precio, queda fijo y lo tiene que aceptar." : est && v.precio_km != null ? "Con tu tarifa, la app calcula " + fmtMon(est, "ARS") + (r.desvio ? " (incluye el desvío aproximado)" : "") + ". Podés cambiarlo." : est ? "La app estimó " + fmtMon(est, "ARS") + " proporcional a los km. Es solo una sugerencia: poné tu precio, sumá el desvío o un mínimo por carga." : "El viaje está \"a convenir\": poné el total que cobrás por este tramo.");
     const ok = el("button", "btn btn-gold btn-sm", r.estado === "confirmada" ? "Enviar cambio de presupuesto" : "Enviar presupuesto"); ok.type = "button";
     ok.addEventListener("click", async () => {
       const total = parseInt(inp.value.replace(/\D/g, ""), 10);
@@ -2522,12 +2745,18 @@ dl.resumen { margin: 0; }
     const l = $("l-mis-res");
     if (!rs.length) { l.append(el("p", "status", "No pediste lugar en ningún viaje.")); return; }
     rs.forEach(r => {
-      const v = r.viajes || {}, box = el("div", "mine"), head = el("div", "mine-head"), t = el("div");
+      const v = r.viajes || {}, box = el("div", "mine"), head = el("div", "mine-head"), t = el("div"); box.id = "mr-" + r.id;
       t.append(el("div", "route", v.paradas ? tramoTexto(v, r) : "Viaje"), el("div", "meta", (v.fecha ? fcorta(v.fecha) + " · " : "") + (v.nombre || "") + " · " + plural(r.caballos, "caballo", "caballos")));
       head.append(t, pillEstado(r, v)); box.append(head);
       if (r.precio_estimado != null && !r.presupuesto_total) box.append(el("span", "meta", "Estimación de la app: " + fmtMon(r.precio_estimado * r.caballos, "ARS") + " en total (el precio lo define el transportista)"));
       if (r.estado === "pendiente" && !r.presupuesto_total) box.append(el("span", "hint", "Todavía no reserva lugar. " + (v.nombre || "El transportista") + " te va a responder por el chat con un presupuesto."));
-      if (r.estado === "confirmada" && r.presupuesto_aceptado) box.append(el("span", "pago-ok", "✓ Total acordado: " + fmtMon(r.presupuesto_aceptado, "ARS") + ". Se lo pagás a " + (v.nombre || "el transportista") + " como acuerden."));
+      if (r.estado === "confirmada" && r.presupuesto_aceptado) {
+        const hoyP = r.tarifa && r.precio_actual ? r.precio_actual : r.presupuesto_aceptado;
+        box.append(el("span", "pago-ok", r.tarifa
+          ? "✓ Hoy pagás " + fmtMon(hoyP, "ARS") + (hoyP < r.presupuesto_aceptado ? " (bajó porque se sumaron caballos; tu máximo era " + fmtMon(r.presupuesto_aceptado, "ARS") + ")" : " como máximo") + ". Se lo pagás a " + (v.nombre || "el transportista") + "."
+          : "✓ Total acordado: " + fmtMon(r.presupuesto_aceptado, "ARS") + ". Se lo pagás a " + (v.nombre || "el transportista") + " como acuerden."));
+        if (r.tarifa && v.fecha && masDias(-1, v.fecha) > hoyISO()) box.append(el("span", "hint", "📉 Si se suman más caballos, baja solo y te avisamos. El precio queda fijo el " + fcorta(masDias(-1, v.fecha)) + "."));
+      }
       if (presupuestoPendiente(r) && v.id) box.append(cajaPresupuesto(r, v));
       const pg = cajaPago(r, v); if (pg) box.append(pg);
       if (v.cerrado || v.activo === false) box.append(el("span", "warn", "El transportista " + (v.cerrado ? "cerró" : "pausó") + " este viaje."));
@@ -2636,7 +2865,7 @@ dl.resumen { margin: 0; }
     const lib = v.libres, nT = Math.min(v.total, 12), sw = 52, sg = 14;
     for (let i = 0; i < nT; i++) { x.fillStyle = i >= nT - Math.min(lib, nT) ? "#f2b01e" : "#d3dee9"; rr(px + i * (sw + sg), y, sw, 80, 10); }
     y += 160; x.fillStyle = "#10243a"; x.font = F(900, 72); x.fillText(lib === 1 ? "1 lugar libre" : lib + " lugares libres", px, y);
-    if (v.precio_caballo != null) { y += 76; x.fillStyle = "#4f6275"; x.font = F(800, 48); x.fillText(fmtMon(v.precio_caballo, v.moneda) + " por caballo", px, y); }
+    if (v.precio_caballo != null) { y += 76; x.fillStyle = "#4f6275"; x.font = F(800, 48); x.fillText((v.precio_km != null ? "Desde " : "") + fmtMon(v.precio_caballo, v.moneda) + " por caballo", px, y); }
     x.fillStyle = "#fff"; x.font = F(800, 50); x.fillText("Pedí tu lugar en", 80, 1700);
     x.font = F(900, 54); x.fillStyle = "#f2b01e"; x.fillText(APP_URL.replace(/^https?:\/\//, "").replace(/\/$/, ""), 80, 1775);
     x.fillStyle = "#fff"; x.font = F(600, 40); x.fillText(v.nombre + " · " + v.vehiculo, 80, 1850);
@@ -2992,7 +3221,7 @@ dl.resumen { margin: 0; }
   })();
 
   // ================= Bandeja: mensajes y avisos (el sobre) =================
-  const ICONO_AVISO = { solicitud: "📩", confirmada: "✅", rechazada: "❌", cancelada: "↩️", anulada: "↩️", mensaje: "💬", pago: "💰" };
+  const ICONO_AVISO = { solicitud: "📩", confirmada: "✅", rechazada: "❌", cancelada: "↩️", anulada: "↩️", mensaje: "💬", pago: "💰", precio: "📉" };
   function haceCuanto(iso) {
     const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
     if (m < 1) return "recién"; if (m < 60) return "hace " + m + " min";
@@ -3087,13 +3316,15 @@ dl.resumen { margin: 0; }
   function cajaPresupuesto(r, v) {
     const box = el("div", "pago-box"), quien = v.nombre || "El transportista";
     const sinUbi = r.desvio && r.carga_lat == null && !r.carga_link && r.baja_lat == null && !r.baja_link;
-    box.append(el("strong", null, (r.estado === "confirmada" ? "📋 " + quien + " cambió el presupuesto: " : "📋 Presupuesto de " + quien + ": ") + fmtMon(r.presupuesto_total, "ARS")),
+    if (r.tarifa && r.estado === "pendiente") box.append(el("strong", null, "📋 Precio con la tarifa de " + quien + ": hasta " + fmtMon(r.presupuesto_total, "ARS")), el("span", "baja", "📉 Es el máximo: si se suman más caballos, baja solo."));
+    else box.append(el("strong", null, (r.estado === "confirmada" ? "📋 " + quien + " cambió el presupuesto: " : "📋 Presupuesto de " + quien + ": ") + fmtMon(r.presupuesto_total, "ARS")));
+    box.append(
       el("span", null, "Total del transporte de " + plural(r.caballos, "caballo", "caballos") + ", " + tramoTexto(v, r) + ". Se lo pagás al transportista como acuerden."));
     if (r.presupuesto_detalle) box.append(el("span", null, "Detalle: " + r.presupuesto_detalle));
     if (r.estado === "confirmada" && r.presupuesto_aceptado) box.append(el("span", "hint", "El total que habías aceptado era " + fmtMon(r.presupuesto_aceptado, "ARS") + ". Si no estás de acuerdo, hablalo por el chat o cancelá la reserva."));
     box.append(el("span", "hint", "Antes de aceptar, revisá que estén bien los datos de carga y descarga."));
     if (sinUbi) box.append(el("span", "warn", "Para aceptar, primero pasale la ubicación exacta del campo (tocá \"Datos de carga y descarga\")."));
-    const ok = el("button", "btn btn-gold", "Aceptar " + fmtMon(r.presupuesto_total, "ARS")); ok.type = "button";
+    const ok = el("button", "btn btn-gold", (r.tarifa && r.estado === "pendiente" ? "Reservar por hasta " : "Aceptar ") + fmtMon(r.presupuesto_total, "ARS")); ok.type = "button";
     ok.addEventListener("click", async () => {
       ok.disabled = true;
       try {
