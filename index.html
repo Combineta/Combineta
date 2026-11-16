@@ -736,7 +736,8 @@ dl.resumen { margin: 0; }
       <h2>5. Precios, cargo de Combineta y devoluciones</h2>
       <p>Los precios del viaje los pone el transportista. El precio de un tramo es una estimación proporcional a los kilómetros. El precio del viaje se le paga directamente al transportista, como acuerden.</p>
       <p class="piloto" data-piloto hidden><strong>Piloto gratuito: Combineta no cobra cargo por servicio durante esta etapa.</strong> Hoy el cargo es $0. Si en el futuro se activa, se va a avisar antes y se va a mostrar siempre antes de pedir lugar. El transporte sí se paga al transportista.</p>
-      <p>Por usar Combineta, quien pide lugar paga un <strong>cargo por servicio</strong> (hoy, el 5% del precio del viaje, con un mínimo de $5.000). El cargo se muestra antes de pedir lugar y se paga con Mercado Pago recién cuando el transportista confirma. Con el pago, el lugar queda asegurado y se comparten los contactos.</p>
+      <p><strong>Tarifa por km repartida:</strong> si el transportista cobra por km, el costo de cada tramo se reparte entre los caballos que viajan. Al reservar aceptás un precio máximo; si se suman más caballos, baja solo, y si alguno cancela puede volver a subir, pero nunca por encima de ese máximo. El precio queda fijo el día anterior al viaje.</p>
+      <p data-cobro-on>Por usar Combineta, quien reserva paga un <strong>cargo por servicio</strong>: hoy, <span data-cargo-texto>un cargo fijo</span>. El cargo se muestra antes de reservar y se paga con Mercado Pago cuando la reserva queda confirmada. Hay <span data-horas-pago>24</span> horas para pagarlo: si no se paga, la reserva se vence y el lugar queda libre. Con el pago, el lugar queda asegurado y se comparten los contactos.</p>
       <p><strong>Devoluciones del cargo:</strong> si cancela el transportista, se devuelve siempre. Si cancela quien pidió lugar con más de 48 horas de anticipación, también se devuelve. Con menos de 48 horas, no se devuelve. Las devoluciones se hacen al mismo medio de pago y pueden tardar unos días en verse, según la tarjeta.</p>
       <h2>6. Reglas de la comunidad</h2>
       <ul>
@@ -919,7 +920,7 @@ dl.resumen { margin: 0; }
       <li>El transportista tiene que tener seguro y habilitación. El dueño, los papeles del caballo al día (DT-e y anemia).</li>
       <li>Combineta no se hace cargo de accidentes, lesiones o muerte de animales, ni de lo que se arregle entre las partes.</li>
       <li>No pases códigos, no pagues señas antes de que te confirmen y no arreglen por fuera. El chat avisa si detecta algo raro.</li>
-      <li data-cobro-on>Combineta cobra un cargo por servicio (hoy 5% del viaje, mínimo $5.000) cuando el transportista confirma. Si cancela él, o vos con más de 48 h, te lo devolvemos.</li>
+      <li data-cobro-on>Combineta cobra un cargo por servicio (hoy, <span data-cargo-texto>un cargo fijo</span>) cuando la reserva se confirma. Si cancela el transportista, o vos con más de 48 h, te lo devolvemos.</li>
       <li data-piloto hidden><strong>Piloto gratuito: Combineta no cobra cargo por servicio durante esta etapa.</strong> El transporte sí se paga al transportista.</li>
       <li>El WhatsApp se comparte recién cuando la reserva está confirmada.</li>
     </ul>
@@ -973,6 +974,7 @@ dl.resumen { margin: 0; }
   const OVERPASS = "https://overpass-api.de/api/interpreter";
   const LEAFLET = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/";
   const VCOLS = "id,owner,nombre,vehiculo,paradas,fecha,hora,total,libres,precio,nota,activo,creado,moneda,precio_caballo,precio_incluye,precio_extras,paradas_det,cerca,ruta_km,ruta_min,ruta_geo,ruta_pendiente,desvio_ok,desvio_km,desvio_min,cargas_propias,ocupacion,vuelta_de,cerrado,precio_km,minimo_caballo";
+  const RCOLS = "id,viaje_id,owner,nombre,caballos,carga_en,baja_en,papeles,estado,creado,carga_lat,carga_lng,carga_link,carga_indic,carga_contacto,baja_lat,baja_lng,baja_link,baja_indic,baja_contacto,desde_idx,hasta_idx,km_tramo,precio_estimado,moneda,desvio,desvio_km,cargo,pago_estado,pagado_en,presupuesto_total,presupuesto_detalle,presupuesto_en,presupuesto_aceptado,presupuesto_aceptado_en,tarifa,precio_actual";
   const PCOLS = "id,owner,nombre,desde,hasta,fecha_desde,fecha_hasta,caballos,tipo,nota,activo,creado,desde_lat,desde_lng,hasta_lat,hasta_lng";
   const PARADA_KM = 8;      // a menos de esto, cargar en una parada confirmada no es desvío
   const PASA_KM = 6;        // a menos de esto del recorrido real, el viaje "pasa por" ese pueblo
@@ -989,8 +991,11 @@ dl.resumen { margin: 0; }
     del(k) { try { localStorage.removeItem("combineta." + k); } catch (_) {} }
   };
   const isoDe = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-  const hoyISO = () => isoDe(new Date());
-  const masDias = (n, base) => { const d = base ? new Date(base + "T12:00:00") : new Date(); d.setDate(d.getDate() + n); return isoDe(d); };
+  // "Hoy" y la hora son siempre los de Argentina, aunque el celular esté en otro país
+  const fmtAR = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  const ahoraAR = () => { const o = {}; try { fmtAR.formatToParts(new Date()).forEach(x => { o[x.type] = x.value; }); return { f: o.year + "-" + o.month + "-" + o.day, h: o.hour + ":" + o.minute }; } catch (_) { const d = new Date(); return { f: isoDe(d), h: String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") }; } };
+  const hoyISO = () => ahoraAR().f;
+  const masDias = (n, base) => { const d = new Date((base || hoyISO()) + "T12:00:00"); d.setDate(d.getDate() + n); return isoDe(d); };
   const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"], MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   const fdate = iso => { const d = new Date(iso + "T12:00:00Z"); return { dia: d.getUTCDate(), mes: MESES[d.getUTCMonth()], sem: DIAS[d.getUTCDay()] }; };
   const fcorta = iso => { const f = fdate(iso); return f.sem + " " + f.dia + " " + f.mes; };
@@ -1467,7 +1472,11 @@ dl.resumen { margin: 0; }
         api("GET", "pedidos?select=" + PCOLS + "&activo=is.true&or=(fecha_hasta.is.null,fecha_hasta.gte." + hoy + ")&order=creado.desc"),
         api("GET", "perfiles?select=id,verificado,verif_telefono,verif_identidad,verif_vehiculo,verif_documentos,verif_fecha")
       ]);
-      VIAJES = v || []; PEDIDOS = p || []; PERFILES = {}; (per || []).forEach(x => { PERFILES[x.id] = x; });
+      const ar = ahoraAR(), viejo = masDias(-7), muyViejo = masDias(-45);
+      // Vencidos: los viajes que ya salieron y los pedidos cuya fecha pasó no se muestran más
+      VIAJES = (v || []).filter(x => x.fecha > ar.f || (x.fecha === ar.f && !(x.hora && x.hora.slice(0, 5) <= ar.h)));
+      PEDIDOS = (p || []).filter(x => x.fecha_hasta ? x.fecha_hasta >= ar.f : x.fecha_desde ? x.fecha_desde >= viejo : (x.creado || "").slice(0, 10) >= muyViejo);
+      api("POST", "rpc/limpieza", {}).catch(() => {}); PERFILES = {}; (per || []).forEach(x => { PERFILES[x.id] = x; });
       await repP;
       cargado = true; $("s-viajes").textContent = ""; $("s-viajes").classList.remove("err");
     } catch (e) { $("s-viajes").textContent = "No pudimos traer los viajes. " + e.message; $("s-viajes").classList.add("err"); }
@@ -1690,7 +1699,7 @@ dl.resumen { margin: 0; }
     if (COBRO.activo) {
       const total = pt.tot != null ? pt.tot : pt.cab != null ? pt.cab * cab : null, cg = cargoDe(total, v.moneda || "ARS");
       box.append(el("span", "cargo-linea", "+ Cargo de Combineta: " + fmtMon(cg, "ARS") + (total != null && (v.moneda || "ARS") === "ARS" && cg > COBRO.minimo ? " (" + String(COBRO.porcentaje).replace(".", ",") + "%)" : "")),
-        el("span", "hint", "El cargo lo pagás por la app recién cuando el transportista confirme tu lugar." + (total != null ? " El viaje (" + fmtMon(total, v.moneda || "ARS") + ") se lo pagás a él como acuerden." : " El precio del viaje lo arreglás con él.")));
+        el("span", "hint", "El cargo lo pagás por la app cuando la reserva queda confirmada." + (total != null ? " El viaje (" + fmtMon(total, v.moneda || "ARS") + ") se lo pagás a él como acuerden." : " El precio del viaje lo arreglás con él.")));
     }
     $("r-desvio").hidden = !m.nueva;
     $("r-desvio").textContent = m.fuera ? "Le pedís que se desvíe ≈ " + fmtKm(m.extra) + " para buscar o dejar tu caballo. Es más de lo que suele aceptar, así que él decide: si dice que sí, te lo confirma. El desvío se puede cobrar aparte."
@@ -1738,7 +1747,7 @@ dl.resumen { margin: 0; }
     guardarDatos($("r-nombre").value, $("r-wa").value);
     const btn = $("r-ok"); btn.disabled = true; btn.textContent = "Enviando…";
     try {
-      const nueva = await api("POST", "reservas?select=*", fila, { auth: true });
+      const nueva = await api("POST", "reservas?select=" + RCOLS, fila, { auth: true });
       const r = nueva && nueva[0];
       if (!r) throw new Error("No pudimos enviar la consulta. Probá de nuevo.");
       if (inst && r.presupuesto_total) {
@@ -1747,6 +1756,7 @@ dl.resumen { margin: 0; }
         try {
           await api("POST", "rpc/aceptar_presupuesto", { reserva: r.id, total: r.presupuesto_total }, { auth: true });
         } catch (ex) { location.hash = "#mis"; toast(ex.message); refrescarTodo(); return; }
+        if (COBRO.activo) { location.hash = "#mis"; await refrescarTodo(); toast("¡Lugar reservado! Falta pagar el cargo de Combineta (" + fmtMon(cargoDe(r.presupuesto_total, "ARS"), "ARS") + ") para asegurarlo."); return; }
         abrirChat(Object.assign({}, r, { estado: "confirmada", presupuesto_aceptado: r.presupuesto_total }), v, v.nombre);
         toast("¡Reserva confirmada! Pagás como máximo " + fmtMon(r.presupuesto_total, "ARS") + ". Coordiná la carga con " + v.nombre + " por el chat.");
         refrescarTodo();
@@ -2537,16 +2547,19 @@ dl.resumen { margin: 0; }
       const uid = miId();
       const [mv, mr, mp] = await Promise.all([
         api("GET", "viajes?select=" + VCOLS + "&owner=eq." + uid + "&order=fecha.desc"),
-        api("GET", "reservas?select=*,viajes(" + VCOLS + ")&owner=eq." + uid + "&order=creado.desc"),
+        api("GET", "reservas?select=" + RCOLS + ",viajes(" + VCOLS + ")&owner=eq." + uid + "&order=creado.desc"),
         api("GET", "pedidos?select=" + PCOLS + "&owner=eq." + uid + "&order=creado.desc")
       ]);
       const ids = (mv || []).map(v => v.id);
       const [rs, cal] = await Promise.all([
-        ids.length ? api("GET", "reservas?select=*&viaje_id=in.(" + ids.join(",") + ")&order=creado.asc") : [],
+        ids.length ? api("GET", "reservas?select=" + RCOLS + "&viaje_id=in.(" + ids.join(",") + ")&order=creado.asc") : [],
         (mr || []).length ? api("GET", "calificaciones?select=reserva_id,estrellas,comentario&autor=eq." + uid).catch(() => []) : [],
         cargarSinLeer()
       ]);
       MIS_CALIF = {}; (cal || []).forEach(c => { MIS_CALIF[c.reserva_id] = c; });
+      // Los teléfonos llegan aparte, y solo los que a esta persona le corresponde ver
+      try { const tel = {}; ((await api("POST", "rpc/mis_contactos", {}, { auth: true })) || []).forEach(t => { tel[t.id] = t; });
+        (rs || []).concat(mr || []).forEach(r => { const t = tel[r.id]; if (t) { r.whatsapp = t.whatsapp; r.carga_tel = t.carga_tel; r.baja_tel = t.baja_tel; } }); } catch (_) {}
       s.textContent = "";
       pintarAvisos($("avisos-mis"));
       pintarMisViajes(mv || [], rs || []); pintarMisReservas(mr || []); pintarMisPedidos(mp || []);
@@ -2682,7 +2695,7 @@ dl.resumen { margin: 0; }
     if (presupuestoPendiente(r)) rr.append(el("span", "hint", "📋 Presupuesto enviado: " + fmtMon(r.presupuesto_total, "ARS") + ". Falta que " + r.nombre.split(" ")[0] + " lo acepte."));
     if (r.estado === "confirmada" && r.pago_estado === "falta") rr.append(el("span", "hint", "⏳ Falta que " + r.nombre.split(" ")[0] + " pague el cargo de Combineta (" + fmtMon(r.cargo, "ARS") + "). Cuando pague, te avisamos y te aparece su WhatsApp."));
     if (r.estado === "confirmada" && r.pago_estado === "pagado") rr.append(el("span", "pago-ok", "✓ Pagó el cargo de Combineta: reserva confirmada."));
-    if (r.estado === "confirmada" && pagoOk(r)) {
+    if (r.estado === "confirmada" && pagoOk(r) && r.whatsapp) {
       const wa = el("a", "btn btn-wa btn-sm", "WhatsApp"); wa.target = "_blank"; wa.rel = "noopener";
       wa.href = waLink(r.whatsapp, "Hola " + r.nombre + ", soy " + v.nombre + " (Combineta), por tu reserva en mi viaje del " + fcorta(v.fecha) + " (" + tramoTexto(v, r) + ")."); acts.append(wa);
     }
@@ -2827,7 +2840,7 @@ dl.resumen { margin: 0; }
       const go = el("a", "btn btn-primary btn-sm", "Cómo llegar"); go.href = comoLlegar(p.lat, p.lng, p.link, p.lugar); go.target = "_blank"; go.rel = "noopener"; acts.append(go);
       if (p.lat != null) { const wz = el("a", "btn btn-ghost btn-sm", "Waze"); wz.href = "https://waze.com/ul?ll=" + p.lat + "," + p.lng + "&navigate=yes"; wz.target = "_blank"; wz.rel = "noopener"; acts.append(wz); }
       const tel = p.tel || p.r.whatsapp;
-      const ll = el("a", "btn btn-ghost btn-sm", "Llamar"); ll.href = "tel:+" + tel; acts.append(ll);
+      if (tel) { const ll = el("a", "btn btn-ghost btn-sm", "Llamar"); ll.href = "tel:+" + tel; acts.append(ll); }
       b.append(acts); li.append(num, b); ol.append(li);
     });
     box.append(ol);
@@ -2985,7 +2998,7 @@ dl.resumen { margin: 0; }
   });
 
   // ================= Condiciones de uso =================
-  const COND_V = "2026-11b";
+  const COND_V = "2026-11c";
   const dlgCond = $("dlg-cond"); let condRes = null;
   async function guardarAceptacion() {
     const k = COND_V + ":" + miId();
@@ -3161,14 +3174,17 @@ dl.resumen { margin: 0; }
   }
 
   // ================= Cobro del cargo de Combineta (Mercado Pago) =================
-  let COBRO = { activo: false, porcentaje: 5, minimo: 5000, horas_devolucion: 48 };
+  let COBRO = { activo: false, porcentaje: 5, minimo: 5000, horas_devolucion: 48, horas_pago: 24 };
+  const textoCargo = () => +COBRO.porcentaje > 0 ? "el " + String(COBRO.porcentaje).replace(".", ",") + "% del precio del viaje, con un mínimo de " + fmtMon(COBRO.minimo, "ARS") : "un cargo fijo de " + fmtMon(COBRO.minimo, "ARS") + " por reserva";
   async function cargarCobro() {
-    try { const c = await api("GET", "cobro_config?select=activo,porcentaje,minimo,horas_devolucion&id=eq.1"); if (c && c[0]) COBRO = c[0]; } catch (_) {}
+    try { const c = await api("GET", "cobro_config?select=*&id=eq.1"); if (c && c[0]) COBRO = Object.assign(COBRO, c[0]); } catch (_) {}
     pintarPiloto();
   }
   function pintarPiloto() {
     document.querySelectorAll("[data-piloto]").forEach(e => { e.hidden = !!COBRO.activo; });
     document.querySelectorAll("[data-cobro-on]").forEach(e => { e.hidden = !COBRO.activo; });
+    document.querySelectorAll("[data-cargo-texto]").forEach(e => { e.textContent = textoCargo(); });
+    document.querySelectorAll("[data-horas-pago]").forEach(e => { e.textContent = COBRO.horas_pago || 24; });
   }
   // Igual que en la base: % del precio del viaje, con un mínimo (solo en pesos)
   function cargoDe(total, moneda) {
@@ -3179,8 +3195,9 @@ dl.resumen { margin: 0; }
   function cajaPago(r, v) {
     if (r.pago_estado === "falta" && r.estado === "confirmada") {
       const box = el("div", "pago-box");
-      box.append(el("strong", null, "Aceptaste el presupuesto de " + (v.nombre || "el transportista")),
-        el("span", null, "Para confirmar la reserva, pagá el cargo de Combineta: " + fmtMon(r.cargo, "ARS") + ". Podés pagar con tarjeta, débito o dinero en Mercado Pago."),
+      box.append(el("strong", null, "Falta un paso: pagar el cargo de Combineta"),
+        el("span", null, "Para asegurar tu lugar con " + (v.nombre || "el transportista") + ", pagá " + fmtMon(r.cargo, "ARS") + ". Podés pagar con tarjeta, débito o dinero en Mercado Pago."),
+        el("span", "warn", "Tenés " + (COBRO.horas_pago || 24) + " horas para pagarlo. Si no, la reserva se vence y el lugar queda libre."),
         el("span", "hint", "Cuando pagues, te aparece el WhatsApp del transportista. El precio del viaje se lo pagás a él."));
       const b = el("button", "btn btn-gold", "Pagar " + fmtMon(r.cargo, "ARS") + " con Mercado Pago"); b.type = "button";
       b.addEventListener("click", () => pagarCargo(r, b));
@@ -3256,11 +3273,11 @@ dl.resumen { margin: 0; }
       const [nots, mv, mr, ms] = await Promise.all([
         api("GET", "notificaciones?select=id,tipo,reserva_id,texto,cantidad,leida,creado&order=id.desc&limit=40", undefined, { auth: true }),
         api("GET", "viajes?select=" + VCOLS + "&owner=eq." + uid),
-        api("GET", "reservas?select=*,viajes(" + VCOLS + ")&owner=eq." + uid),
+        api("GET", "reservas?select=" + RCOLS + ",viajes(" + VCOLS + ")&owner=eq." + uid),
         api("GET", "mensajes?select=reserva_id,id,autor,texto,creado&order=id.desc&limit=500", undefined, { auth: true }).catch(() => [])
       ]);
       const ids = (mv || []).map(v => v.id), porId = {}; (mv || []).forEach(v => { porId[v.id] = v; });
-      const rs = ids.length ? await api("GET", "reservas?select=*&viaje_id=in.(" + ids.join(",") + ")") : [];
+      const rs = ids.length ? await api("GET", "reservas?select=" + RCOLS + "&viaje_id=in.(" + ids.join(",") + ")") : [];
       const ultimo = {}; (ms || []).forEach(m => { if (!ultimo[m.reserva_id]) ultimo[m.reserva_id] = m; });
       const noLeidoPor = {}; (nots || []).forEach(n => { if (!n.leida && n.reserva_id) noLeidoPor[n.reserva_id] = true; });
       const convers = [
