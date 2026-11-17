@@ -1079,6 +1079,12 @@ dl.resumen { margin: 0; }
     if (/row-level security/i.test(m)) return "No se pudo guardar: puede que ya no quede lugar en ese tramo.";
     if (/whatsapp/i.test(m) && /check/i.test(m)) return "Revisá el número de WhatsApp.";
     if (/does not exist|schema cache/i.test(m)) return "Falta actualizar la base de datos de Combineta (SQL nuevo).";
+    if (/permission denied/i.test(m)) return "No se pudo completar. Probá de nuevo en un momento; si sigue, avisanos.";
+    if (/jwt|token.*expired|expired.*token/i.test(m)) return "Tu sesión venció. Volvé a entrar y probá de nuevo.";
+    if (/duplicate key|already exists/i.test(m)) return "Eso ya estaba cargado.";
+    if (/violates check constraint/i.test(m)) return "Revisá los datos: alguno no es válido.";
+    if (/violates foreign key/i.test(m)) return "Ese viaje o reserva ya no existe.";
+    if (/failed to fetch|network/i.test(m)) return "Sin conexión. Revisá internet y probá de nuevo.";
     return m;
   }
 
@@ -1747,7 +1753,10 @@ dl.resumen { margin: 0; }
     guardarDatos($("r-nombre").value, $("r-wa").value);
     const btn = $("r-ok"); btn.disabled = true; btn.textContent = "Enviando…";
     try {
-      const nueva = await api("POST", "reservas?select=" + RCOLS, fila, { auth: true });
+      // La tabla no deja leer los teléfonos, así que no pedimos que nos devuelva la fila al guardarla:
+      // se guarda "en silencio" y después se lee la reserva con las columnas permitidas.
+      await api("POST", "reservas", fila, { auth: true, prefer: "return=minimal" });
+      const nueva = await api("GET", "reservas?select=" + RCOLS + "&owner=eq." + sesion.user_id + "&viaje_id=eq." + v.id + "&order=creado.desc&limit=1", undefined, { auth: true });
       const r = nueva && nueva[0];
       if (!r) throw new Error("No pudimos enviar la consulta. Probá de nuevo.");
       if (inst && r.presupuesto_total) {
