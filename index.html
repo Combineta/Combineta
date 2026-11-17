@@ -441,6 +441,27 @@ dl.resumen { margin: 0; }
 .ocup-row .barra { grid-column: 1 / -1; height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
 .ocup-row .barra i { display: block; height: 100%; background: var(--azul); }
 .ocup-row.lleno .barra i { background: var(--dorado); }
+/* Cuadritos de lugares + círculo amarillo con los lugares libres */
+.lugares { display: flex; flex-direction: column; gap: 10px; }
+.lug-row { display: flex; flex-direction: column; gap: 6px; }
+.lug-cab { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+.lug-cab span { color: var(--muted); overflow-wrap: anywhere; }
+.lug-grid { display: flex; border: 2px solid var(--muted); border-radius: 8px; overflow: hidden; }
+.lug { flex: 1 1 0; min-width: 0; height: 34px; border-right: 2px solid var(--muted); background: transparent; }
+.lug:last-child { border-right: 0; }
+.lug.ocupado { background: var(--celeste); }
+.lug-row.lleno .lug.ocupado { background: var(--dorado); }
+.lug-leyenda { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.lug-leyenda i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -1px; margin-right: 5px; }
+.lug-leyenda .l1 { background: var(--celeste); }
+.lug-leyenda .l2 { border: 2px solid var(--muted); box-sizing: border-box; }
+.lug-leyenda .l3 { background: var(--dorado); }
+.card, .mine { position: relative; }
+.cupo { position: absolute; top: 12px; right: 12px; width: 58px; height: 58px; border-radius: 50%; background: var(--dorado); color: #10243a; display: grid; place-content: center; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.28); line-height: 1; }
+.cupo b { font-size: 24px; font-weight: 900; }
+.cupo span { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; margin-top: 2px; }
+.cupo.lleno { background: var(--line); color: var(--muted); box-shadow: none; }
+.card.con-cupo .card-body, .mine.con-cupo .mine-head { padding-right: 70px; }
 .tramo-sel { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .precio-box { background: var(--bg); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
 .precio-box strong { font-size: 20px; }
@@ -1532,6 +1553,8 @@ dl.resumen { margin: 0; }
     body.append(who);
     const rp = textoRep(v.owner); body.append(el("div", "meta rep", rp || "Nuevo en Combineta: todavía sin viajes hechos"));
     const det = el("div", "det"); det.hidden = true;
+    det.append(el("h4", null, "Lugares del camión"));
+    const lg = el("div", "lugares"); pintarCuadritos(lg, st.map(s => s.n), ocupDe(v), v.total); det.append(lg);
     det.append(el("h4", null, "Paradas confirmadas"));
     const ol = el("ol", "itin");
     st.forEach((s, i) => { const li = el("li"); li.append(el("span", "n", String(i + 1))); const t = el("div", "t", s.n); t.append(el("small", null, (s.p || "") + (i && s.km != null ? " · km " + fmtNum(s.km) : ""))); li.append(t, el("span")); ol.append(li); });
@@ -1556,6 +1579,7 @@ dl.resumen { margin: 0; }
       b.addEventListener("click", () => abrirSolicitud(v, m)); acts.append(b);
     }
     foot.append(acts);
+    card.classList.add("con-cupo"); card.append(cupoCirculo(libres));
     card.append(diaTile(v.fecha), body, foot, det);
     return card;
   }
@@ -2234,6 +2258,29 @@ dl.resumen { margin: 0; }
       const b = el("div", "barra"), i = el("i"); i.style.width = Math.min(100, occ[s] / total * 100) + "%"; b.append(i); r.append(b); box.append(r);
     }
   }
+  // Cuadritos: un casillero por lugar del camión; celeste = ocupado, amarillo cuando el tramo está lleno
+  function pintarCuadritos(box, nombres, occ, total) {
+    box.replaceChildren();
+    for (let s = 0; s < occ.length; s++) {
+      const llenos = Math.max(0, Math.min(total, occ[s] || 0)), lleno = llenos >= total;
+      const r = el("div", "lug-row" + (lleno ? " lleno" : ""));
+      r.append(el("div", "lug-cab"));
+      r.firstChild.append(el("span", null, nombres[s] + " → " + nombres[s + 1]), el("strong", null, lleno ? "Lleno" : plural(total - llenos, "libre", "libres")));
+      const g = el("div", "lug-grid"); g.setAttribute("role", "img"); g.setAttribute("aria-label", llenos + " de " + total + " lugares ocupados");
+      for (let i = 0; i < total; i++) g.append(el("span", "lug" + (i < llenos ? " ocupado" : "")));
+      r.append(g); box.append(r);
+    }
+    const ley = el("div", "lug-leyenda");
+    ley.innerHTML = '<span><i class="l1"></i>Ocupado</span><span><i class="l2"></i>Libre</span><span><i class="l3"></i>Tramo lleno</span>';
+    box.append(ley);
+  }
+  // Círculo amarillo con los lugares libres
+  function cupoCirculo(libres) {
+    const n = Math.max(0, libres), c = el("div", "cupo" + (n === 0 ? " lleno" : ""));
+    c.setAttribute("role", "img"); c.setAttribute("aria-label", n === 0 ? "Sin lugares libres" : plural(n, "lugar libre", "lugares libres"));
+    c.append(el("b", null, String(n)), el("span", null, n === 0 ? "lleno" : n === 1 ? "libre" : "libres"));
+    return c;
+  }
   function pintarOcup() { const ps = paradasVJ(); pintarOcupEn($("v-ocup"), ps.map(p => p.n), ocupacionVJ(), parseInt($("v-total").value, 10) || 1); }
 
   // Precio
@@ -2657,7 +2704,8 @@ dl.resumen { margin: 0; }
       t.append(el("div", "route", st[0].n + " → " + st[n - 1].n), el("div", "meta", fcorta(v.fecha) + (v.hora ? " · " + v.hora.slice(0, 5) : "") + (v.ruta_km ? " · " + fmtKm(v.ruta_km) : v.ruta_pendiente ? " · ruta pendiente de calcular" : "")));
       const estado = v.cerrado ? "Cerrado" : !v.activo ? "Pausado" : v.fecha < hoyISO() ? "Ya salió" : "Publicado";
       head.append(t, el("span", "pill" + (estado === "Publicado" ? " confirmada" : ""), estado)); box.append(head);
-      const oc = el("div", "ocup"); pintarOcupEn(oc, st.map(s => s.n), ocupDe(v), v.total); box.append(el("strong", null, "Lugares por tramo"), oc);
+      box.classList.add("con-cupo"); box.append(cupoCirculo(v.libres));
+      const oc = el("div", "lugares"); pintarCuadritos(oc, st.map(s => s.n), ocupDe(v), v.total); box.append(el("strong", null, "Lugares por tramo"), oc);
       const mias = reservas.filter(r => r.viaje_id === v.id);
       const pend = mias.filter(r => r.estado === "pendiente"), conf = mias.filter(r => r.estado === "confirmada");
       if (pend.length) box.append(el("strong", null, "Consultas"), el("p", "hint", "No ocupan lugar hasta que el dueño acepta tu presupuesto."));
