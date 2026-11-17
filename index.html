@@ -28,6 +28,7 @@
   --dorado: #f2b01e;        /* lugares libres, sello */
   --dorado-ink: #3a2700;
   --ok: #1d7a4a;
+  --lug-lleno: #2fa05a; --lug-libre: #5aa0e6; --lug-borde: #000000;   /* barra de lugares */
   --bad: #b3261e;
   --display: "Overpass", system-ui, sans-serif;
   --mono: "Overpass Mono", ui-monospace, Menlo, monospace;
@@ -38,6 +39,7 @@
     --bg: #0d1722; --surface: #142232; --ink: #e6eef6; --muted: #9db0c3; --line: #263a4f;
     --celeste: #74acdf; --celeste-soft: #18324a; --azul: #2f78b8; --azul-ink: #ffffff;
     --dorado: #f5bd3e; --dorado-ink: #2e1f00; --ok: #57c48a; --bad: #ff8a80;
+    --lug-lleno: #35b565; --lug-libre: #3d86d6; --lug-borde: #f4f8fc;
     color-scheme: dark;
   }
 }
@@ -45,6 +47,7 @@
   --bg: #0d1722; --surface: #142232; --ink: #e6eef6; --muted: #9db0c3; --line: #263a4f;
   --celeste: #74acdf; --celeste-soft: #18324a; --azul: #2f78b8; --azul-ink: #ffffff;
   --dorado: #f5bd3e; --dorado-ink: #2e1f00; --ok: #57c48a; --bad: #ff8a80;
+  --lug-lleno: #35b565; --lug-libre: #3d86d6; --lug-borde: #f4f8fc;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -446,16 +449,14 @@ dl.resumen { margin: 0; }
 .lug-row { display: flex; flex-direction: column; gap: 6px; }
 .lug-cab { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
 .lug-cab span { color: var(--muted); overflow-wrap: anywhere; }
-.lug-grid { display: flex; border: 2px solid var(--muted); border-radius: 8px; overflow: hidden; }
-.lug { flex: 1 1 0; min-width: 0; height: 34px; border-right: 2px solid var(--muted); background: transparent; }
+.lug-grid { display: flex; border: 2px solid var(--lug-borde); border-radius: 8px; overflow: hidden; }
+.lug { flex: 1 1 0; min-width: 0; height: 36px; border-right: 2px solid var(--lug-borde); background: var(--lug-libre); }
 .lug:last-child { border-right: 0; }
-.lug.ocupado { background: var(--celeste); }
-.lug-row.lleno .lug.ocupado { background: var(--dorado); }
+.lug.ocupado { background: var(--lug-lleno); }
 .lug-leyenda { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
 .lug-leyenda i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -1px; margin-right: 5px; }
-.lug-leyenda .l1 { background: var(--celeste); }
-.lug-leyenda .l2 { border: 2px solid var(--muted); box-sizing: border-box; }
-.lug-leyenda .l3 { background: var(--dorado); }
+.lug-leyenda .l1 { background: var(--lug-lleno); border: 2px solid var(--lug-borde); box-sizing: border-box; }
+.lug-leyenda .l2 { background: var(--lug-libre); border: 2px solid var(--lug-borde); box-sizing: border-box; }
 .card, .mine { position: relative; }
 .cupo { position: absolute; top: 12px; right: 12px; width: 58px; height: 58px; border-radius: 50%; background: var(--dorado); color: #10243a; display: grid; place-content: center; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.28); line-height: 1; }
 .cupo b { font-size: 24px; font-weight: 900; }
@@ -2258,7 +2259,7 @@ dl.resumen { margin: 0; }
       const b = el("div", "barra"), i = el("i"); i.style.width = Math.min(100, occ[s] / total * 100) + "%"; b.append(i); r.append(b); box.append(r);
     }
   }
-  // Cuadritos: un casillero por lugar del camión; celeste = ocupado, amarillo cuando el tramo está lleno
+  // Barra de lugares: un casillero por lugar del camión; verde = ocupado, azul = libre (contorno negro)
   function pintarCuadritos(box, nombres, occ, total) {
     box.replaceChildren();
     for (let s = 0; s < occ.length; s++) {
@@ -2271,7 +2272,7 @@ dl.resumen { margin: 0; }
       r.append(g); box.append(r);
     }
     const ley = el("div", "lug-leyenda");
-    ley.innerHTML = '<span><i class="l1"></i>Ocupado</span><span><i class="l2"></i>Libre</span><span><i class="l3"></i>Tramo lleno</span>';
+    ley.innerHTML = '<span><i class="l1"></i>Ocupado</span><span><i class="l2"></i>Libre</span>';
     box.append(ley);
   }
   // Círculo amarillo con los lugares libres
