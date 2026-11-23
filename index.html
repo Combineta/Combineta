@@ -396,6 +396,9 @@ dl.resumen { margin: 0; }
 .mini-stepper { display: grid; grid-template-columns: 52px 1fr 52px; gap: 8px; }
 .mini-stepper button { min-height: 52px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface); font-size: 26px; font-weight: 900; cursor: pointer; }
 .mini-stepper input { text-align: center; font-size: 22px; font-weight: 900; min-height: 52px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg); width: 100%; }
+.avisame { margin: 8px 0 14px; }
+.alerta-form { margin-top: 12px; display: grid; gap: 10px; }
+.alerta-form select { width: 100%; min-height: 52px; font-size: 18px; border: 2px solid var(--line); border-radius: 10px; padding: 8px 12px; background: var(--bg); }
 .loc { position: relative; }
 .loc input { width: 100%; background: var(--bg); border: 2px solid var(--line); border-radius: 10px; padding: 11px 13px; min-height: 52px; font-size: 18px; }
 .loc input:focus { border-color: var(--azul); outline: none; }
@@ -512,6 +515,10 @@ dl.resumen { margin: 0; }
       <div class="field" style="justify-content:flex-end"><button class="btn btn-primary" type="submit" style="min-height:58px;font-size:19px">Buscar viajes</button></div>
     </form>
     <p class="search-note" id="search-note" role="status"></p>
+    <div class="avisame" id="avisame-box" hidden>
+      <button type="button" class="btn btn-ghost" id="b-avisame">🔔 Avisame cuando haya un viaje así</button>
+      <p class="hint" id="avisame-msg" role="status"></p>
+    </div>
 
     <div class="section-title"><h2 id="h-viajes">Próximos viajes</h2><span class="count" id="c-viajes"></span></div>
     <p class="status" id="s-viajes" role="status">Cargando viajes…</p>
@@ -716,6 +723,19 @@ dl.resumen { margin: 0; }
     <h1 id="t-mis">Mis viajes</h1>
     <div id="cuenta-box"></div>
     <div id="avisos-mis"></div>
+    <div class="section-title"><h2>🔔 Mis avisos de viajes</h2></div>
+    <div id="alertas-box">
+      <p class="hint" id="alertas-premium" hidden>Sos transportista premium: además te avisamos cuando alguien pide transporte en una ruta que seguís.</p>
+      <div class="list" id="l-alertas"></div>
+      <form class="alerta-form" id="f-alerta" novalidate>
+        <p class="hint">Avisame si un viaje pasa cerca de mi ciudad o mi campo. Tu punto lo ves solo vos: el transportista no lo sabe hasta que le pidas que te pase a buscar.</p>
+        <div class="field"><label for="al-lugar">Mi ciudad o el pueblo más cercano a mi campo</label><input id="al-lugar" data-loc placeholder="Escribí la localidad" autocomplete="off"></div>
+        <div class="field"><label for="al-radio">Avisame si pasa a menos de</label>
+          <select id="al-radio"><option value="10">10 km</option><option value="25" selected>25 km</option><option value="50">50 km</option><option value="100">100 km</option></select></div>
+        <button class="btn btn-primary" type="submit">Crear aviso</button>
+        <p class="hint" id="al-msg" role="status"></p>
+      </form>
+    </div>
     <p class="status" id="s-mis" role="status"></p>
     <div id="agenda-wrap" hidden>
       <div class="section-title"><h2>Mi agenda</h2></div>
@@ -996,8 +1016,9 @@ dl.resumen { margin: 0; }
   const OVERPASS = "https://overpass-api.de/api/interpreter";
   const LEAFLET = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/";
   const VCOLS = "id,owner,nombre,vehiculo,paradas,fecha,hora,total,libres,precio,nota,activo,creado,moneda,precio_caballo,precio_incluye,precio_extras,paradas_det,cerca,ruta_km,ruta_min,ruta_geo,ruta_pendiente,desvio_ok,desvio_km,desvio_min,cargas_propias,ocupacion,vuelta_de,cerrado,precio_km,minimo_caballo";
-  const RCOLS = "id,viaje_id,owner,nombre,caballos,carga_en,baja_en,papeles,estado,creado,carga_lat,carga_lng,carga_link,carga_indic,carga_contacto,baja_lat,baja_lng,baja_link,baja_indic,baja_contacto,desde_idx,hasta_idx,km_tramo,precio_estimado,moneda,desvio,desvio_km,cargo,pago_estado,pagado_en,presupuesto_total,presupuesto_detalle,presupuesto_en,presupuesto_aceptado,presupuesto_aceptado_en,tarifa,precio_actual";
+  const RCOLS = "id,viaje_id,owner,nombre,caballos,carga_en,baja_en,papeles,estado,creado,carga_lat,carga_lng,carga_link,carga_indic,carga_contacto,baja_lat,baja_lng,baja_link,baja_indic,baja_contacto,desde_idx,hasta_idx,km_tramo,precio_estimado,moneda,desvio,desvio_km,cargo,pago_estado,pagado_en,presupuesto_total,presupuesto_detalle,presupuesto_en,presupuesto_aceptado,presupuesto_aceptado_en,tarifa,precio_actual,km_desde,km_hasta,desvio_min,desvio_fuente,op_id";
   const PCOLS = "id,owner,nombre,desde,hasta,fecha_desde,fecha_hasta,caballos,tipo,nota,activo,creado,desde_lat,desde_lng,hasta_lat,hasta_lng";
+  const MISMO_LUGAR_KM = 12; // mismo nombre y provincia, pero a más de esto de distancia: es otro lugar
   const PARADA_KM = 8;      // a menos de esto, cargar en una parada confirmada no es desvío
   const PASA_KM = 6;        // a menos de esto del recorrido real, el viaje "pasa por" ese pueblo
   const PASA_KM_APROX = 30; // lo mismo, si solo tenemos la línea recta entre paradas
@@ -1200,7 +1221,14 @@ dl.resumen { margin: 0; }
     "Tucumán": [-26.82, -65.22, "Tucumán"], "Salta": [-24.79, -65.41, "Salta"], "Neuquén": [-38.95, -68.06, "Neuquén"]
   };
   const LOCAL = Object.keys(PUEBLOS).map(k => ({ n: k, p: PUEBLOS[k][2] || "Buenos Aires", lat: PUEBLOS[k][0], lng: PUEBLOS[k][1] }));
-  const localPorNombre = s => { const k = norm(String(s || "").split(",")[0]); return LOCAL.find(l => norm(l.n) === k) || null; };
+  // Busca en la lista propia por nombre. Si se indica provincia (aparte o escrita "Pueblo, Provincia") tiene que coincidir:
+  // con nombres repetidos no se adivina.
+  const localPorNombre = (s, prov) => {
+    const partes = String(s || "").split(","), k = norm(partes[0]), pv = norm(prov || partes[1] || "");
+    const c = LOCAL.filter(l => norm(l.n) === k);
+    if (!pv) return c[0] || null;
+    return c.find(l => norm(l.p) === pv) || null;
+  };
   const etiqueta = l => l ? l.n + (l.p ? ", " + l.p : "") : "";
 
   // Distancias en km
@@ -1209,10 +1237,21 @@ dl.resumen { margin: 0; }
     const x = Math.sin(dLa / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLo / 2) ** 2;
     return 2 * R * Math.asin(Math.sqrt(x));
   }
+  // ¿Dos lugares son el mismo? Nunca solo por compartir nombre:
+  // identificador estable si lo hay; si no, mismo nombre + misma provincia (explícita) + coordenadas cercanas.
+  function mismoLugar(a, b) {
+    if (!a || !b) return false;
+    if (a.gid && b.gid) return a.gid === b.gid;
+    if (norm(a.n) !== norm(b.n)) return false;
+    const pa = norm(a.p), pb = norm(b.p);
+    if (pa && pb && pa !== pb) return false;
+    if (a.lat != null && b.lat != null) return hav([a.lat, a.lng], [b.lat, b.lng]) <= MISMO_LUGAR_KM;
+    return !!(pa && pb);
+  }
   function largo(geo) { let s = 0; for (let i = 1; i < geo.length; i++) s += hav(geo[i - 1], geo[i]); return s; }
   // Punto más cercano del recorrido: distancia al recorrido y km recorridos hasta ahí
   function proyectar(geo, p) {
-    let mejor = { dist: Infinity, avance: 0 }, acum = 0;
+    let mejor = { dist: Infinity, avance: 0, pt: null }, acum = 0;
     const kx = 111.32 * Math.cos(p[0] * Math.PI / 180), ky = 110.57;
     for (let i = 0; i < geo.length - 1; i++) {
       const a = geo[i], b = geo[i + 1];
@@ -1220,7 +1259,7 @@ dl.resumen { margin: 0; }
       const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy || 1e-9;
       let t = -(ax * dx + ay * dy) / L2; t = Math.max(0, Math.min(1, t));
       const d = Math.hypot(ax + t * dx, ay + t * dy), seg = hav(a, b);
-      if (d < mejor.dist) mejor = { dist: d, avance: acum + t * seg };
+      if (d < mejor.dist) mejor = { dist: d, avance: acum + t * seg, pt: [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])] };
       acum += seg;
     }
     return mejor;
@@ -1240,9 +1279,10 @@ dl.resumen { margin: 0; }
     if (cacheLoc[k]) return cacheLoc[k];
     let res = [];
     try {
-      const r = await fetchT(GEOREF + "/localidades?nombre=" + encodeURIComponent(q) + "&max=12&aplanar=true&campos=nombre,provincia.nombre,centroide.lat,centroide.lon", 6000);
+      const r = await fetchT(GEOREF + "/localidades?nombre=" + encodeURIComponent(q) + "&max=12&aplanar=true&campos=id,nombre,provincia.nombre,centroide.lat,centroide.lon", 6000);
       const j = await r.json();
       res = (j.localidades || []).map(l => ({
+        gid: l.id ? "georef:" + l.id : undefined,
         n: titulo(l.nombre), p: l.provincia_nombre || (l.provincia && l.provincia.nombre) || "",
         lat: +(l.centroide_lat != null ? l.centroide_lat : (l.centroide || {}).lat), lng: +(l.centroide_lon != null ? l.centroide_lon : (l.centroide || {}).lon)
       })).filter(l => isFinite(l.lat) && isFinite(l.lng));
@@ -1375,6 +1415,17 @@ dl.resumen { margin: 0; }
       : (geo && s.lat != null ? proyectar(geo, [s.lat, s.lng]).avance : i * 100));
     return v._av;
   }
+  // Kilómetro de cada parada sobre el recorrido. Misma regla que el servidor: si todas tienen km y crecen, esos;
+  // si no, el recorrido se reparte en partes iguales.
+  function kmParadas(v) {
+    if (v._kp) return v._kp;
+    const n = v.paradas.length, st = paradasDe(v), ks = st.map(s => (s.km == null ? null : Number(s.km)));
+    const ok = ks.length === n && ks.every(k => k != null && isFinite(k)) && ks.every((k, i) => i === 0 || k > ks[i - 1]);
+    const R = +v.ruta_km || 0;
+    return (v._kp = ok ? ks : ks.map((_, i) => R * i / Math.max(n - 1, 1)));
+  }
+  // Kilómetro (de ruta_km) que corresponde a un avance medido sobre la línea del recorrido
+  function kmDeAvance(v, av) { const g = geoDe(v); return g && v.ruta_km ? Math.max(0, Math.min(v.ruta_km, av / largo(g) * v.ruta_km)) : null; }
   function ocupDe(v) {
     const n = v.paradas.length;
     if (Array.isArray(v.ocupacion) && v.ocupacion.length === n - 1) return v.ocupacion;
@@ -1393,10 +1444,10 @@ dl.resumen { margin: 0; }
     let best = -1, bd = Infinity;
     st.forEach((s, i) => {
       if ((esCarga && i === n - 1) || (!esCarga && i === 0)) return;
-      const d = norm(s.n) === norm(punto.n) ? 0 : (s.lat != null && punto.lat != null ? hav([s.lat, s.lng], [punto.lat, punto.lng]) : Infinity);
+      const d = mismoLugar(s, punto) ? 0 : (s.lat != null && punto.lat != null ? hav([s.lat, s.lng], [punto.lat, punto.lng]) : Infinity);
       if (d < bd) { bd = d; best = i; }
     });
-    if (best >= 0 && bd <= PARADA_KM) return { idx: best, tipo: "parada", av: av[best], dist: bd };
+    if (best >= 0 && bd <= PARADA_KM) return { idx: best, tipo: "parada", av: av[best], dist: bd, km: kmParadas(v)[best] };
     const geo = geoDe(v);
     if (!geo || punto.lat == null) return null;
     const pr = proyectar(geo, [punto.lat, punto.lng]);
@@ -1406,7 +1457,7 @@ dl.resumen { margin: 0; }
     else { idx = n - 1; for (let i = n - 1; i > 0; i--) if (av[i] >= pr.avance - 0.5) idx = i; }
     // Si el recorrido pasa por ahí (o casi), no es desvío: es una parada nueva a coordinar
     const pasa = pr.dist <= (geoReal(v) ? PASA_KM : PASA_KM_APROX);
-    return { idx, tipo: pasa ? "pasa" : "desvio", av: pr.avance, dist: pr.dist, extra: pasa ? 0 : 2 * pr.dist * 1.3 };
+    return { idx, tipo: pasa ? "pasa" : "desvio", av: pr.avance, dist: pr.dist, pt: pr.pt, km: kmDeAvance(v, pr.avance), lat: punto.lat, lng: punto.lng, extra: pasa ? 0 : 2 * pr.dist * 1.3, extraAprox: !pasa };
   }
   // ¿Este viaje sirve para la búsqueda q = {o, d, f1, f2, cab}?
   // Nunca escondemos un viaje que pasa cerca: si se sale de lo que acepta el transportista,
@@ -1426,7 +1477,7 @@ dl.resumen { margin: 0; }
     const st = paradasDe(v);
     const nueva = a.tipo !== "parada" || b.tipo !== "parada";
     return { d: a.idx, h: b.idx, a, b, extra, desvio: extra > 0, nueva, fuera, otraFecha: !fechaOk, libres,
-      km: kmTramo(v, a.idx, b.idx, a.av, b.av), completo: a.idx === 0 && b.idx === n - 1 && !nueva,
+      kmD: a.km, kmH: b.km, km: kmTramo(v, a.idx, b.idx, a.av, b.av), completo: a.idx === 0 && b.idx === n - 1 && !nueva,
       desdeN: a.tipo === "parada" ? st[a.idx].n : q.o.n, hastaN: b.tipo === "parada" ? st[b.idx].n : q.d.n };
   }
   // Viajes viejos o publicados sin ruta: calculamos el recorrido real para poder encontrar los pueblos del camino
@@ -1453,24 +1504,27 @@ dl.resumen { margin: 0; }
     }));
     if (cambio && vista === "buscar") pintarBuscar();
   }
-  // Tarifa por km: cada tramo cuesta km × tarifa y se reparte entre los caballos que van (igual que en la base)
+  // Tarifa por km: se cobra solo la parte del recorrido que hacen los caballos de esa solicitud (de kmD a kmH).
+  // Cada pedazo entre paradas cuesta km × tarifa y se reparte entre los caballos que van en ese pedazo.
+  // El precio de cada caballo se redondea a $ 1.000 (nunca menos de $ 1.000) y el total es siempre caballos × ese precio.
+  // Misma cuenta que calc_precio_tarifa() en la base: el servidor es el que manda.
   const redondeo = x => Math.max(1000, Math.round(x / 1000) * 1000);
-  function precioTarifa(v, d, h, c, desvioKm, lleno) {
-    const n = v.paradas.length, st = paradasDe(v), occ = ocupDe(v); let parte = 0, kmt = 0;
+  function precioTarifa(v, d, h, c, desvioKm, lleno, kmD, kmH) {
+    const K = kmParadas(v), occ = ocupDe(v), a = kmD != null ? kmD : K[d], b = kmH != null ? kmH : K[h];
+    let parte = 0, kmt = 0;
     for (let s = d; s < h; s++) {
-      const k0 = st[s] && st[s].km, k1 = st[s + 1] && st[s + 1].km;
-      const seg = k0 != null && k1 != null && k1 > k0 ? k1 - k0 : (v.ruta_km || 0) / Math.max(n - 1, 1);
+      const len = Math.max(0, Math.min(b, K[s + 1]) - Math.max(a, K[s]));
       const hh = lleno ? Math.max(v.total, c) : Math.max((occ[s] || 0) + c, c);
-      parte += seg * v.precio_km * c / hh; kmt += seg;
+      parte += len * v.precio_km * c / hh; kmt += len;
     }
     const piso = (v.minimo_caballo || 0) * c * (v.ruta_km > 0 ? Math.min(1, kmt / v.ruta_km) : 1);
-    return redondeo(Math.max(parte, piso) + (desvioKm || 0) * v.precio_km);
+    return redondeo((Math.max(parte, piso) + (desvioKm || 0) * v.precio_km) / c) * c;
   }
   // Precio por caballo para ese tramo
   function precioTramo(v, m, cab) {
     if (v.precio_km != null && v.ruta_km) {
-      const c = cab || 1, tot = precioTarifa(v, m.d, m.h, c, m.nueva ? m.extra || 0 : 0);
-      return { cab: Math.round(tot / c), tot, tarifa: true, lleno: precioTarifa(v, m.d, m.h, 1, 0, true) };
+      const c = cab || 1, tot = precioTarifa(v, m.d, m.h, c, m.nueva ? m.extra || 0 : 0, false, m.kmD, m.kmH);
+      return { cab: tot / c, tot, tarifa: true, lleno: precioTarifa(v, m.d, m.h, 1, 0, true, m.kmD, m.kmH) };
     }
     if (v.precio_caballo == null) return { convenir: true };
     if (m.completo) return { cab: +v.precio_caballo };
@@ -1668,6 +1722,7 @@ dl.resumen { margin: 0; }
     if (f1 && f2 && f2 < f1) { const t = f1; f1 = f2; f2 = t; }
     busqueda = { o, d, f1, f2, cab };
     $("search-note").textContent = (o.lat == null || d.lat == null) ? "Elegí la localidad de la lista para encontrar también viajes que pasan cerca." : "";
+    $("avisame-box").hidden = !(o.lat != null && d.lat != null); $("b-avisame").disabled = false; $("avisame-msg").textContent = "";
     pintarBuscar();
     $("h-viajes").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   });
@@ -1696,14 +1751,34 @@ dl.resumen { margin: 0; }
     if (matchSel && matchSel.a && matchSel.a.tipo !== "parada") d.append(new Option(nom(matchSel.a, matchSel.desdeN), "x"));
     if (matchSel && matchSel.b && matchSel.b.tipo !== "parada") h.append(new Option(nom(matchSel.b, matchSel.hastaN).replace("que pase a buscarlo", "que lo lleve hasta ahí"), "x"));
   }
+  // Desvío de un lado (carga o entrega): por carretera si ya lo calculamos; si no, la estimación en línea recta
+  function ladoDesvio(x, on) {
+    if (!on || !x || x.tipo !== "desvio") return { km: 0, min: 0, real: true };
+    if (x.real) return { km: x.real.km, min: x.real.min, real: true };
+    return { km: x.extra || 0, min: (x.extra || 0) / VEL_DESVIO * 60, real: false };
+  }
+  // Recalcula cada desvío por carretera: ida y vuelta entre el recorrido y el lugar, incluyendo recogida y entrega
+  async function desvioPorCarretera(m) {
+    for (const x of [m.a, m.b]) {
+      if (!x || x.tipo !== "desvio" || x.real || x.realFalla || !x.pt) continue;
+      try {
+        const base = { lat: x.pt[0], lng: x.pt[1] };
+        const [r] = await calcularRuta([base, { lat: x.lat, lng: x.lng }, base], false);
+        x.real = { km: r.km, min: r.min };
+      } catch (_) { x.realFalla = true; }
+    }
+  }
   function tramoElegido() {
     const v = viajeSel, n = v.paradas.length, dv = $("r-d").value, hv = $("r-h").value;
     const desvD = dv === "x", desvH = hv === "x";
     const d = desvD ? matchSel.a.idx : +dv, h = desvH ? matchSel.b.idx : +hv;
     const avD = desvD ? matchSel.a.av : null, avH = desvH ? matchSel.b.av : null;
-    const extra = (desvD ? matchSel.a.extra : 0) + (desvH ? matchSel.b.extra : 0), nueva = desvD || desvH;
-    const fuera = extra > 0 && (!v.desvio_ok || extra > v.desvio_km || (v.desvio_min > 0 && extra / VEL_DESVIO * 60 > v.desvio_min));
-    const m = { d, h, desvio: extra > 0, extra, nueva, fuera, completo: d === 0 && h === n - 1 && !nueva, km: kmTramo(v, d, h, avD, avH) };
+    const lA = ladoDesvio(matchSel && matchSel.a, desvD), lB = ladoDesvio(matchSel && matchSel.b, desvH);
+    const extra = lA.km + lB.km, extraMin = lA.min + lB.min, extraReal = lA.real && lB.real, nueva = desvD || desvH;
+    const fuera = extra > 0 && (!v.desvio_ok || extra > v.desvio_km || (v.desvio_min > 0 && extraMin > v.desvio_min));
+    const K = kmParadas(v);
+    const m = { d, h, desvio: extra > 0, extra, extraMin, extraReal, nueva, fuera, completo: d === 0 && h === n - 1 && !nueva, km: kmTramo(v, d, h, avD, avH),
+      kmD: desvD ? matchSel.a.km : K[d], kmH: desvH ? matchSel.b.km : K[h], a: desvD ? matchSel.a : null, b: desvH ? matchSel.b : null };
     m.libres = h > d ? libresTramo(v, d, h) : 0;
     m.desdeN = desvD ? matchSel.desdeN : paradasDe(v)[d].n; m.hastaN = desvH ? matchSel.hastaN : paradasDe(v)[h].n;
     return m;
@@ -1719,7 +1794,7 @@ dl.resumen { margin: 0; }
       if (pt.lleno < pt.cab) box.append(el("span", "baja", "📉 Si se suman más caballos, baja solo (hasta " + fmtMon(pt.lleno * cab, "ARS") + " si se llena). Te avisamos."));
       box.append(el("span", "hint", "Es la tarifa por km de " + v.nombre + ", repartida entre los caballos que viajan. El precio queda fijo el día anterior al viaje."));
     } else {
-      box.append(el("strong", null, (/^\$/.test(pr.linea) ? "Estimado: " : "") + pr.linea), el("span", null, m.libres > 0 ? plural(m.libres, "lugar libre en ese tramo", "lugares libres en ese tramo") : "No queda lugar en ese tramo"));
+      box.append(el("strong", null, (/^\$/.test(pr.linea) ? (m.nueva ? "Estimación pendiente de confirmar: " : "Estimado: ") : "") + pr.linea), el("span", null, m.libres > 0 ? plural(m.libres, "lugar libre en ese tramo", "lugares libres en ese tramo") : "No queda lugar en ese tramo"));
       if (pr.detalle) box.append(el("span", "hint", pr.detalle));
       box.append(el("span", "hint", "El precio final lo confirma el transportista en su presupuesto."));
     }
@@ -1733,15 +1808,23 @@ dl.resumen { margin: 0; }
         el("span", "hint", "El cargo lo pagás por la app cuando la reserva queda confirmada." + (total != null ? " El viaje (" + fmtMon(total, v.moneda || "ARS") + ") se lo pagás a él como acuerden." : " El precio del viaje lo arreglás con él.")));
     }
     $("r-desvio").hidden = !m.nueva;
-    $("r-desvio").textContent = m.fuera ? "Le pedís que se desvíe ≈ " + fmtKm(m.extra) + " para buscar o dejar tu caballo. Es más de lo que suele aceptar, así que él decide: si dice que sí, te lo confirma. El desvío se puede cobrar aparte."
-      : m.desvio ? "Para cargar o bajar fuera de sus paradas hace falta un desvío de ≈ " + fmtKm(m.extra) + ". El transportista lo tiene que aprobar."
-      : m.nueva ? "El viaje pasa por ahí, pero no es una de sus paradas. El transportista te confirma el lugar exacto para cargar." : "";
+    const dv = m.extraReal ? "≈ " + fmtKm(m.extra) + " y ≈ " + Math.max(1, Math.round(m.extraMin)) + " min más por carretera" : "≈ " + fmtKm(m.extra) + " en línea recta (estimación pendiente de confirmar: la calculamos por carretera en un momento)";
+    $("r-desvio").textContent = m.fuera ? "Le pedís que se desvíe " + dv + " para buscar o dejar tu caballo. Es más de lo que suele aceptar, así que él decide: si dice que sí, te lo confirma. El desvío se puede cobrar aparte."
+      : m.desvio ? "Para cargar o bajar fuera de sus paradas hace falta un desvío de " + dv + ". El transportista lo tiene que aprobar."
+      : m.nueva ? "El viaje pasa por ahí, pero no es una de sus paradas. El transportista tiene que aceptar la parada y confirmarte el lugar exacto: el precio es una estimación pendiente de confirmar." : "";
+    // Si falta calcular algún desvío por carretera, se pide una sola vez por lado (si el servicio falla, queda como estimación)
+    if ([m.a, m.b].some(x => x && x.tipo === "desvio" && !x.real && !x.realFalla)) { const vv = viajeSel; desvioPorCarretera(m).then(() => { if (viajeSel === vv && dlg.open) actualizarTramo(); }); }
     return m;
   }
   // Con tarifa por km y sin desvío, se reserva al instante (el precio lo calcula la app)
-  const reservaAlInstante = (v, m) => v.precio_km != null && !!v.ruta_km && !m.nueva;
+  const reservaAlInstante = (v, m) => v.precio_km != null && !!v.ruta_km && !m.nueva && COBRO.reserva_instantanea !== false;
   ["r-d", "r-h"].forEach(id => $(id).addEventListener("change", actualizarTramo));
   $("r-cab").addEventListener("input", actualizarTramo);
+  // Número único de la operación "reservar este viaje": se mantiene mientras se reintenta y se renueva al terminar
+  const OPS = {};
+  const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3 | 8)).toString(16); }));
+  const opReserva = (v, k) => (OPS[v.id + "|" + k] = OPS[v.id + "|" + k] || uuid());
+  const opReservaListo = (v, k) => { delete OPS[v.id + "|" + k]; };
   function abrirSolicitud(v, m) {
     viajeSel = v; matchSel = m && !m.completo ? m : (busqueda ? matchViaje(v, busqueda) : null);
     const st = paradasDe(v);
@@ -1771,19 +1854,26 @@ dl.resumen { margin: 0; }
     const cuenta = await pedirCuenta("Para consultar, entrá con tu celular. Así ves tus consultas y el chat desde cualquier teléfono.");
     if (!cuenta) return;
     if (!(await condiciones())) return;
-    const pr = precioTramo(v, m, n), inst = reservaAlInstante(v, m);
+    const pr = precioTramo(v, m, n), inst = reservaAlInstante(v, m), claveOp = [m.d, m.h, n, m.kmD, m.kmH].join();
     const fila = { viaje_id: v.id, nombre: $("r-nombre").value.trim(), whatsapp: wa, caballos: n,
       carga_en: m.desdeN, baja_en: m.hastaN, desde_idx: m.d, hasta_idx: m.h, km_tramo: m.km != null ? Math.round(m.km) : null,
-      precio_estimado: pr.cab != null ? pr.cab : null, moneda: "ARS", desvio: m.nueva, desvio_km: m.nueva ? Math.round(m.extra) : null };
+      precio_estimado: pr.cab != null ? pr.cab : null, moneda: "ARS", desvio: m.nueva, desvio_km: m.nueva ? Math.round(m.extra) : null,
+      desvio_min: m.nueva && m.extra > 0 ? Math.max(1, Math.round(m.extraMin)) : null, desvio_fuente: m.nueva && m.extra > 0 ? (m.extraReal ? "carretera" : "aproximado") : null,
+      km_desde: m.nueva && m.kmD != null ? Math.round(m.kmD * 10) / 10 : null, km_hasta: m.nueva && m.kmH != null ? Math.round(m.kmH * 10) / 10 : null,
+      op_id: opReserva(v, claveOp) };
     guardarDatos($("r-nombre").value, $("r-wa").value);
     const btn = $("r-ok"); btn.disabled = true; btn.textContent = "Enviando…";
     try {
       // La tabla no deja leer los teléfonos, así que no pedimos que nos devuelva la fila al guardarla:
       // se guarda "en silencio" y después se lee la reserva con las columnas permitidas.
-      await api("POST", "reservas", fila, { auth: true, prefer: "return=minimal" });
-      const nueva = await api("GET", "reservas?select=" + RCOLS + "&owner=eq." + sesion.user_id + "&viaje_id=eq." + v.id + "&order=creado.desc&limit=1", undefined, { auth: true });
-      const r = nueva && nueva[0];
+      // Cada intento lleva un número único (op_id): si la respuesta se pierde y se reintenta, o se toca dos veces,
+      // el servidor reconoce que es la misma consulta y no la duplica.
+      try { await api("POST", "reservas", fila, { auth: true, prefer: "return=minimal" }); }
+      catch (ex) { if (!(ex.raw && String(ex.raw.code) === "23505" && /op_id|reservas_op_unica/i.test(String(ex.raw.message || "") + String(ex.raw.details || "")))) throw ex; }
+      const nueva = await api("GET", "reservas?select=" + RCOLS + "&owner=eq." + sesion.user_id + "&op_id=eq." + fila.op_id, undefined, { auth: true });
+      const r = nueva && nueva[0]; opReservaListo(v, claveOp);
       if (!r) throw new Error("No pudimos enviar la consulta. Probá de nuevo.");
+      if (r.estado !== "pendiente") { dlg.close(); location.hash = "#mis"; toast("Tu consulta ya estaba enviada. La ves en Mis viajes."); refrescarTodo(); return; }
       if (inst && r.presupuesto_total) {
         dlg.close();
         if (r.presupuesto_total > pr.tot) { location.hash = "#mis"; toast("El precio cambió mientras reservabas: revisalo y confirmalo en Mis viajes."); return; }
@@ -2334,7 +2424,7 @@ dl.resumen { margin: 0; }
 
   function filaViaje() {
     const ps = paradasVJ(), tot = VJ.geo ? largo(VJ.geo) : 0, wa = normWA($("v-wa").value);
-    const det = ps.map(p => ({ n: p.n, p: p.p || "", lat: p.lat, lng: p.lng, km: VJ.geo && VJ.km && p.lat != null ? Math.round(proyectar(VJ.geo, [p.lat, p.lng]).avance / tot * VJ.km) : null }));
+    const det = ps.map(p => ({ n: p.n, p: p.p || "", lat: p.lat, lng: p.lng, ...(p.gid ? { gid: p.gid } : {}), km: VJ.geo && VJ.km && p.lat != null ? Math.round(proyectar(VJ.geo, [p.lat, p.lng]).avance / tot * VJ.km) : null }));
     if (det.length) det[0].km = 0;
     const modo = modoCobro(), pkm = modo === "km" && kmVJ() ? precioKmVJ() || null : null, minimo = pkm ? numDe("v-minimo") || null : null;
     const precio = modo === "caballo" ? numPrecio() || null : pkm ? porCaballoLleno(pkm, kmVJ(), parseInt($("v-total").value, 10), minimo) : null;
@@ -2598,7 +2688,7 @@ dl.resumen { margin: 0; }
     const s = $("s-mis"), lv = $("l-mis-viajes"), lr = $("l-mis-res"), lp = $("l-mis-ped");
     lv.replaceChildren(); lr.replaceChildren(); lp.replaceChildren();
     $("agenda-wrap").hidden = !miId();
-    if (!miId()) { s.textContent = ""; [lv, lr, lp].forEach(l => l.append(el("p", "status", "Nada por ahora."))); return; }
+    if (!miId()) { $("l-alertas").replaceChildren(el("p", "status", "Nada por ahora.")); $("alertas-premium").hidden = true; s.textContent = ""; [lv, lr, lp].forEach(l => l.append(el("p", "status", "Nada por ahora."))); return; }
     s.textContent = "Cargando…"; s.classList.remove("err");
     try {
       const uid = miId();
@@ -2619,10 +2709,56 @@ dl.resumen { margin: 0; }
         (rs || []).concat(mr || []).forEach(r => { const t = tel[r.id]; if (t) { r.whatsapp = t.whatsapp; r.carga_tel = t.carga_tel; r.baja_tel = t.baja_tel; } }); } catch (_) {}
       s.textContent = "";
       pintarAvisos($("avisos-mis"));
+      cargarAlertas();
       pintarMisViajes(mv || [], rs || []); pintarMisReservas(mr || []); pintarMisPedidos(mp || []);
       pintarAgenda(mv || [], rs || [], mr || []);
     } catch (e) { s.textContent = "No pudimos cargar tus viajes. " + e.message; s.classList.add("err"); }
   }
+  // ================= Avisos de viajes =================
+  const ALERTA_MAX = 5;
+  async function cargarAlertas() {
+    const l = $("l-alertas"); l.replaceChildren();
+    try {
+      const uid = miId();
+      const [as, pf] = await Promise.all([
+        api("GET", "alertas?select=id,tipo,desde,hasta,radio_km,activa&order=creado.desc", undefined, { auth: true }),
+        api("GET", "perfiles?select=premium&id=eq." + uid).catch(() => [])
+      ]);
+      $("alertas-premium").hidden = !(pf && pf[0] && pf[0].premium);
+      if (!(as || []).length) { l.append(el("p", "status", "Todavía no creaste avisos.")); return; }
+      as.forEach(a => {
+        const box = el("div", "mine"), head = el("div", "mine-head"), t = el("div");
+        const ruta = a.tipo === "ruta" ? (a.desde || "?") + " → " + (a.hasta || "?") : "Cerca de " + (a.desde || "mi punto");
+        t.append(el("div", "route", (a.tipo === "ruta" ? "🔔 " : "📍 ") + ruta), el("div", "meta", a.tipo === "ruta" ? "Viajes que sirven para ese tramo (hasta " + a.radio_km + " km)" : "Viajes que pasan a menos de " + a.radio_km + " km"));
+        head.append(t, el("span", "pill" + (a.activa ? " pendiente" : ""), a.activa ? "Activo" : "Pausado")); box.append(head);
+        const p = el("button", "btn btn-ghost btn-sm", a.activa ? "Pausar" : "Activar"); p.type = "button";
+        p.addEventListener("click", async () => { p.disabled = true; try { await api("PATCH", "alertas?select=id&id=eq." + a.id, { activa: !a.activa }, { auth: true }); cargarAlertas(); } catch (e) { toast(e.message); p.disabled = false; } });
+        const b = el("button", "btn btn-ghost btn-sm", "Borrar"); b.type = "button";
+        b.addEventListener("click", async () => { if (!confirmarDos(b)) return; b.disabled = true; try { await api("DELETE", "alertas?id=eq." + a.id, undefined, { auth: true }); cargarAlertas(); } catch (e) { toast(e.message); b.disabled = false; } });
+        box.append(p, b); l.append(box);
+      });
+    } catch (e) { l.append(el("p", "status err", "No pudimos cargar tus avisos. " + e.message)); }
+  }
+  async function crearAlerta(tipo, o, d, radio) {
+    const body = { tipo, desde: o.n, desde_lat: o.lat, desde_lng: o.lng, radio_km: radio };
+    if (tipo === "ruta") { body.hasta = d.n; body.hasta_lat = d.lat; body.hasta_lng = d.lng; }
+    try { await api("POST", "alertas?select=id", body, { auth: true }); }
+    catch (e) { if (e.raw && (e.raw.code === "23505" || /duplicate key/i.test(e.raw.message || ""))) return "repetido"; throw e; }
+  }
+  $("b-avisame").addEventListener("click", async () => {
+    const b = $("b-avisame"), m = $("avisame-msg");
+    if (!busqueda || busqueda.o.lat == null || busqueda.d.lat == null) { m.textContent = "Elegí origen y destino de la lista para poder avisarte."; return; }
+    b.disabled = true; m.classList.remove("err");
+    try { const r0 = await crearAlerta("ruta", busqueda.o, busqueda.d, 30); m.textContent = (r0 === "repetido" ? "Ya tenías este aviso. " : "") + "Listo: te avisamos cuando se publique un viaje de " + busqueda.o.n + " a " + busqueda.d.n + ". Lo ves en Mensajes."; }
+    catch (e) { m.textContent = e.message; m.classList.add("err"); b.disabled = false; }
+  });
+  $("f-alerta").addEventListener("submit", async e => {
+    e.preventDefault();
+    const m = $("al-msg"), l = getLoc($("al-lugar")); m.classList.remove("err");
+    if (!l || l.lat == null) { m.textContent = "Elegí la localidad de la lista."; m.classList.add("err"); return; }
+    try { const r0 = await crearAlerta("cerca", l, null, parseInt($("al-radio").value, 10)); setLoc($("al-lugar"), null); m.textContent = r0 === "repetido" ? "Ya tenías un aviso en ese lugar." : "Listo, aviso creado."; cargarAlertas(); }
+    catch (er) { m.textContent = er.message; m.classList.add("err"); }
+  });
   // ================= Mi agenda: calendario de viajes y reservas =================
   const MESES_L = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   const AG = { mes: null, sel: null, items: {} };
@@ -2742,7 +2878,9 @@ dl.resumen { margin: 0; }
     rr.append(h, el("span", "meta", "Tramo: " + tramoTexto(v, r) + (r.km_tramo ? " · " + fmtKm(r.km_tramo) : "")));
     rr.append(el("span", "meta", "Carga en " + r.carga_en + ((r.carga_lat != null || r.carga_link) ? " (con ubicación exacta)" : "") +
       (r.baja_en ? " · baja en " + r.baja_en + ((r.baja_lat != null || r.baja_link) ? " (con ubicación exacta)" : "") : "") + (r.papeles ? " · papeles al día: " + r.papeles : "")));
-    if (r.desvio && r.desvio_km > 0) rr.append(el("span", "tag desvio", "Te pide que pases a buscarlo: desvío de ≈ " + fmtKm(r.desvio_km) + " (aproximado). Tenelo en cuenta en el presupuesto."));
+    if (r.desvio && r.desvio_km > 0) rr.append(el("span", "tag desvio", "Te pide que pases a buscarlo: desvío de ≈ " + fmtKm(r.desvio_km) + (r.desvio_min ? " y ≈ " + r.desvio_min + " min más" : "") +
+      (r.desvio_fuente === "carretera" ? " por carretera." : " (estimación pendiente de confirmar: en línea recta).") + " Tenelo en cuenta en el presupuesto."));
+    if (r.km_desde != null && r.km_hasta != null) rr.append(el("span", "meta", "Recorre del km " + Math.round(r.km_desde) + " al km " + Math.round(r.km_hasta) + " de tu viaje (" + fmtKm(r.km_hasta - r.km_desde) + "). Ninguno de los dos puntos es una parada confirmada: aceptá la parada o proponé otra al mandar el presupuesto."));
     else if (r.desvio) rr.append(el("span", "tag por", "Tu viaje pasa por " + r.carga_en + ", pero no es una de tus paradas. Si aceptan el presupuesto, parás ahí."));
     const acts = el("div", "res-actions");
     acts.append(botonChat(r, v, r.nombre));
@@ -3013,10 +3151,11 @@ dl.resumen { margin: 0; }
     if (v === "publicar" && $("f-viaje").hidden && $("f-pedido").hidden && $("publicado").hidden) setSeg("viaje");
     window.scrollTo(0, 0);
   }
-  function abrirFoco() {
+  async function abrirFoco() {
     const id = viajeFoco; viajeFoco = null;
     try { history.replaceState(null, "", location.pathname + "#buscar"); } catch (_) {}
-    const v = VIAJES.find(x => x.id === id);
+    let v = VIAJES.find(x => x.id === id);
+    if (!v) { try { await refrescarTodo(); } catch (_) {} v = VIAJES.find(x => x.id === id); } // viaje recién publicado
     if (!v) return toast("Ese viaje ya salió o no está disponible. Mirá los otros.");
     if (v.owner === miId()) return toast("Este es tu viaje.");
     if (v.libres < 1 && ocupDe(v).every(o => o >= v.total)) return toast("Ese viaje ya está completo.");
@@ -3232,7 +3371,7 @@ dl.resumen { margin: 0; }
   }
 
   // ================= Cobro del cargo de Combineta (Mercado Pago) =================
-  let COBRO = { activo: false, porcentaje: 5, minimo: 5000, horas_devolucion: 48, horas_pago: 24 };
+  let COBRO = { activo: false, porcentaje: 5, minimo: 5000, horas_devolucion: 48, horas_pago: 24, reserva_instantanea: true };
   const textoCargo = () => +COBRO.porcentaje > 0 ? "el " + String(COBRO.porcentaje).replace(".", ",") + "% del precio del viaje, con un mínimo de " + fmtMon(COBRO.minimo, "ARS") : "un cargo fijo de " + fmtMon(COBRO.minimo, "ARS") + " por reserva";
   async function cargarCobro() {
     try { const c = await api("GET", "cobro_config?select=*&id=eq.1"); if (c && c[0]) COBRO = Object.assign(COBRO, c[0]); } catch (_) {}
@@ -3296,7 +3435,7 @@ dl.resumen { margin: 0; }
   })();
 
   // ================= Bandeja: mensajes y avisos (el sobre) =================
-  const ICONO_AVISO = { solicitud: "📩", confirmada: "✅", rechazada: "❌", cancelada: "↩️", anulada: "↩️", mensaje: "💬", pago: "💰", precio: "📉" };
+  const ICONO_AVISO = { solicitud: "📩", confirmada: "✅", rechazada: "❌", cancelada: "↩️", anulada: "↩️", mensaje: "💬", pago: "💰", precio: "📉", aviso_viaje: "🔔", aviso_cerca: "📍", aviso_pedido: "🐴" };
   function haceCuanto(iso) {
     const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
     if (m < 1) return "recién"; if (m < 60) return "hace " + m + " min";
@@ -3329,7 +3468,7 @@ dl.resumen { margin: 0; }
     try {
       const uid = miId();
       const [nots, mv, mr, ms] = await Promise.all([
-        api("GET", "notificaciones?select=id,tipo,reserva_id,texto,cantidad,leida,creado&order=id.desc&limit=40", undefined, { auth: true }),
+        api("GET", "notificaciones?select=id,tipo,reserva_id,viaje_id,pedido_id,texto,cantidad,leida,creado&order=id.desc&limit=40", undefined, { auth: true }),
         api("GET", "viajes?select=" + VCOLS + "&owner=eq." + uid),
         api("GET", "reservas?select=" + RCOLS + ",viajes(" + VCOLS + ")&owner=eq." + uid),
         api("GET", "mensajes?select=reserva_id,id,autor,texto,creado&order=id.desc&limit=500", undefined, { auth: true }).catch(() => [])
@@ -3379,6 +3518,10 @@ dl.resumen { margin: 0; }
     } catch (e) { s.textContent = "No pudimos cargar tus mensajes. " + e.message; s.classList.add("err"); }
   }
   function abrirAviso(n) {
+    if (n.viaje_id || n.pedido_id) {
+      api("POST", "rpc/leer_aviso", { aviso: n.id }, { auth: true }).catch(() => {}).then(contarNoLeidas);
+      location.hash = n.viaje_id ? "#viaje=" + n.viaje_id : "#buscar"; return;
+    }
     const c = n.reserva_id && BANDEJA.convers[n.reserva_id];
     if (n.tipo === "mensaje" && c) return abrirChat(c.r, c.v, c.con);
     leerAvisos(n.reserva_id);
